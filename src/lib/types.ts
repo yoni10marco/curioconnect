@@ -1,0 +1,38 @@
+export type Profile = {
+    id: string;
+    username: string | null;
+    total_xp: number;
+    streak_count: number;
+    last_lesson_date: string | null;
+    difficulty_level: string;
+    created_at: string;
+};
+
+export type UserInterest = {
+    id: string;
+    user_id: string;
+    interest_name: string;
+};
+
+export type Topic = {
+    id: string;
+    name: string;
+    category: string;
+};
+
+export type QuizQuestion = {
+    q: string;
+    options: string[];
+    answer_idx: number;
+};
+
+export type DailyLesson = {
+    id: string;
+    user_id: string;
+    topic_id: string | null;
+    title: string;
+    content_markdown: string;
+    quiz_data: QuizQuestion[];
+    is_completed: boolean;
+    created_at: string;
+};

@@ -1,0 +1,110 @@
+CURIOCONNECT MVP: FINAL MASTER SPECIFICATION
+1. IDENTITY & GOALS
+Concept: A "Duolingo for everything" using AI to bridge academic topics with user hobbies.
+
+Tone: Encouraging, gamified, and intellectually stimulating.
+
+Success Metric: User completes 1 personalized lesson + 1 quiz daily.
+
+2. THE TECH STACK (HARD CONSTRAINTS)
+Framework: React Native + Expo (EAS for Cloud Builds).
+
+Backend: Supabase (Auth, Postgres, Edge Functions).
+
+AI: OpenAI API (GPT-4o) via Supabase Edge Functions.
+
+State Management: Antigravity (Zustand-based logic).
+
+Environment: Project IDX (Cloud IDE).
+
+3. DATABASE SCHEMA & SECURITY (SQL)
+SQL
+-- ENABLE EXTENSIONS
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- TABLES
+CREATE TABLE profiles (
+  id UUID REFERENCES auth.users ON DELETE CASCADE PRIMARY KEY,
+  username TEXT,
+  total_xp INTEGER DEFAULT 0,
+  streak_count INTEGER DEFAULT 0,
+  last_lesson_date DATE,
+  difficulty_level TEXT DEFAULT 'adult',
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE user_interests (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+  interest_name TEXT NOT NULL
+);
+
+CREATE TABLE topics (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name TEXT UNIQUE NOT NULL,
+  category TEXT
+);
+
+CREATE TABLE daily_lessons (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+  topic_id UUID REFERENCES topics(id),
+  title TEXT,
+  content_markdown TEXT,
+  quiz_data JSONB, -- Array: [{q, options: [], answer_idx}]
+  is_completed BOOLEAN DEFAULT FALSE,
+  created_at DATE DEFAULT CURRENT_DATE
+);
+
+-- ROW LEVEL SECURITY (RLS)
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can only view their own profile" ON profiles FOR SELECT USING (auth.uid() = id);
+
+ALTER TABLE daily_lessons ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can only view their own lessons" ON daily_lessons FOR SELECT USING (auth.uid() = user_id);
+4. UI/UX SPECIFICATIONS
+Primary Color: #58CC02 (Green). Text: #4B4B4B (Dark Gray).
+
+Screen Layouts:
+
+Onboarding: Selection chips for hobbies. Minimum 2 selections required.
+
+Dashboard: Top-row stats (Fire icon for Streak, Star for XP). Centered "Daily Mission" button.
+
+Lesson Reader: Clean typography. Progress bar at the top (fills as user scrolls or clicks 'Next').
+
+Quiz Modal: Overlays the screen. 1 question at a time. Vibration on error.
+
+5. SYSTEM LOGIC (FOR ANTIGRAVITY AGENT)
+A. The "Daily Content" Pipeline
+Trigger: User clicks "Start Lesson" on a new day.
+
+Search daily_lessons for user_id where created_at = CURRENT_DATE.
+
+If exists: Load lesson.
+
+If NOT:
+
+Fetch 1 random topic NOT in user history.
+
+Fetch 1 random interest from user_interests.
+
+AI Call: Generate Title, 500-word Markdown content, and 3 Quiz questions.
+
+Fallback: If AI fails, load a pre-written "Introduction to Science" lesson.
+
+B. Rewards & Streaks
+Completion Reward: 50 XP per lesson.
+
+Streak Increment: If last_lesson_date == yesterday, streak_count++. If > yesterday, streak_count = 1.
+
+6. IMPLEMENTATION ROADMAP
+Project Init: Setup Project IDX with Expo + Supabase CLI.
+
+Data Layer: Apply SQL Schema and Seed topics table with 10 academic subjects.
+
+Auth Flow: Implement Email Login -> Interest Selection -> Dashboard.
+
+The Engine: Build the Edge Function for GPT-4o integration.
+
+Gamification: Create the logic for XP updates and the "Streak Fire" animation.
