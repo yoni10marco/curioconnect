@@ -22,6 +22,15 @@ export default function LoginScreen() {
     const [username, setUsername] = useState('');
     const { signIn, signUp, loading } = useAuthStore();
 
+    const friendlyError = (raw: string) => {
+        if (raw.includes('Invalid login credentials')) return 'Wrong email or password. Please try again.';
+        if (raw.includes('Email address') && raw.includes('invalid')) return 'Please use a real email address (e.g. yourname@gmail.com).';
+        if (raw.includes('rate limit')) return 'Too many attempts. Please wait a few minutes and try again.';
+        if (raw.includes('already registered')) return 'This email is already registered. Try logging in instead.';
+        if (raw.includes('Password should be')) return 'Password must be at least 6 characters.';
+        return raw;
+    };
+
     const handleSubmit = async () => {
         if (!email || !password) {
             Alert.alert('Missing Fields', 'Please enter your email and password.');
@@ -31,18 +40,32 @@ export default function LoginScreen() {
             Alert.alert('Missing Fields', 'Please enter a username.');
             return;
         }
+        if (password.length < 6) {
+            Alert.alert('Weak Password', 'Password must be at least 6 characters.');
+            return;
+        }
 
         let error: string | null;
         if (isLogin) {
             ({ error } = await signIn(email.trim(), password));
         } else {
             ({ error } = await signUp(email.trim(), password, username.trim()));
+            if (!error) {
+                // Success — if email confirmation is ON, the user needs to check email
+                Alert.alert(
+                    'Check your email ✉️',
+                    `We sent a confirmation link to ${email.trim()}. Click it to activate your account, then come back and log in.\n\nTip: Disable email confirmation in Supabase dashboard to skip this step during development.`,
+                    [{ text: 'OK', onPress: () => setIsLogin(true) }]
+                );
+                return;
+            }
         }
 
         if (error) {
-            Alert.alert('Error', error);
+            Alert.alert('Oops!', friendlyError(error));
         }
     };
+
 
     return (
         <LinearGradient
