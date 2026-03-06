@@ -10,14 +10,13 @@ import {
     NativeScrollEvent,
 } from 'react-native';
 import MarkdownDisplay from 'react-native-markdown-display';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/theme';
 import { useLessonStore } from '../../store/useLessonStore';
 import { AppStackParamList } from '../../navigation';
 import QuizModal from '../../components/QuizModal';
 
-type Nav = NativeStackNavigationProp<AppStackParamList, 'LessonReader'>;
+type Nav = NavigationProp<AppStackParamList>;
 
 export default function LessonReaderScreen() {
     const navigation = useNavigation<Nav>();
@@ -147,7 +146,7 @@ export default function LessonReaderScreen() {
                 onComplete={() => {
                     setQuizVisible(false);
                     if (currentPageIndex === lessonPages.length - 1) {
-                        navigation.navigate('Dashboard');
+                        navigation.navigate('MainTabs');
                     } else {
                         // Go to next page
                         setCurrentPageIndex(prev => prev + 1);

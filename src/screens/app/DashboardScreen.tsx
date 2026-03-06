@@ -9,15 +9,14 @@ import {
     Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/theme';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useLessonStore } from '../../store/useLessonStore';
 import { AppStackParamList } from '../../navigation';
 import { APP_VERSION } from '../../lib/version';
 
-type Nav = NativeStackNavigationProp<AppStackParamList, 'Dashboard'>;
+type Nav = NavigationProp<AppStackParamList>;
 
 export default function DashboardScreen() {
     const navigation = useNavigation<Nav>();
