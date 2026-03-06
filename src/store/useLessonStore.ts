@@ -28,6 +28,14 @@ export const useLessonStore = create<LessonState>((set) => ({
             return;
         }
 
+        // Always get a fresh token — AsyncStorage may not have hydrated the client yet
+        const { data: sessionData } = await supabase.auth.getSession();
+        const accessToken = sessionData.session?.access_token ?? session.access_token;
+        if (!accessToken) {
+            set({ loading: false, error: 'Session expired. Please log in again.' });
+            return;
+        }
+
         const today = new Date().toISOString().split('T')[0];
 
         // 1. Check if lesson already exists for today
@@ -66,9 +74,12 @@ export const useLessonStore = create<LessonState>((set) => ({
             ? interests[Math.floor(Math.random() * interests.length)]
             : null;
 
-        // 4. Call Edge Function to generate lesson
+        // 4. Call Edge Function — explicitly pass Authorization header to fix 401 on web
         try {
             const { data, error } = await supabase.functions.invoke('generate-lesson', {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
                 body: {
                     topic_name: randomTopic?.name ?? 'Science',
                     interest_name: randomInterest?.interest_name ?? 'general knowledge',
@@ -78,9 +89,11 @@ export const useLessonStore = create<LessonState>((set) => ({
             });
 
             if (error) throw error;
+            if (!data?.lesson) throw new Error('No lesson returned from server');
             set({ lesson: data.lesson as DailyLesson, loading: false });
-        } catch (err) {
-            set({ loading: false, error: 'Failed to generate lesson. Please try again.' });
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : 'Failed to generate lesson.';
+            set({ loading: false, error: message });
         }
     },
 
