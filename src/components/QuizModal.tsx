@@ -138,7 +138,7 @@ export default function QuizModal({ visible, questions, isFinalPage, onClose, on
 
                 {finished ? (
                     // Results Screen
-                    <View style={styles.results}>
+                    <ScrollView contentContainerStyle={styles.results} showsVerticalScrollIndicator={false}>
                         <Text style={styles.resultsEmoji}>
                             {isFinalPage ? (score === questions.length ? '🏆' : '🌟') : '📖'}
                         </Text>
@@ -151,18 +151,18 @@ export default function QuizModal({ visible, questions, isFinalPage, onClose, on
                         <TouchableOpacity style={styles.doneButton} onPress={handleRestartAndClose}>
                             <Text style={styles.doneButtonText}>{isFinalPage ? 'Back to Dashboard' : 'Read Next Page'}</Text>
                         </TouchableOpacity>
-                    </View>
+                    </ScrollView>
                 ) : (
                     // Question Screen
                     <Animated.View key={current} style={[styles.content, { transform: [{ translateX: shakeAnim }] }]}>
                         {!question ? (
-                            <View style={styles.results}>
+                            <ScrollView contentContainerStyle={styles.results} showsVerticalScrollIndicator={false}>
                                 <Text style={styles.resultsEmoji}>😕</Text>
                                 <Text style={styles.resultsTitle}>Quiz data error</Text>
                                 <TouchableOpacity style={styles.doneButton} onPress={onClose}>
                                     <Text style={styles.doneButtonText}>Close</Text>
                                 </TouchableOpacity>
-                            </View>
+                            </ScrollView>
                         ) : (
                             <ScrollView
                                 showsVerticalScrollIndicator={false}
@@ -350,7 +350,7 @@ const styles = StyleSheet.create({
         fontWeight: FONTS.weights.bold,
     },
     results: {
-        flex: 1,
+        flexGrow: 1,
         alignItems: 'center',
         justifyContent: 'center',
         padding: SPACING.xl,
