@@ -15,6 +15,7 @@ import { useAuthStore } from '../../store/useAuthStore';
 import { useLessonStore } from '../../store/useLessonStore';
 import type { AppStackParamList } from '../../navigation';
 import { APP_VERSION } from '../../lib/version';
+import { Ionicons } from '@expo/vector-icons';
 
 type Nav = NavigationProp<AppStackParamList>;
 
@@ -170,6 +171,30 @@ export default function DashboardScreen() {
                         : "Every expert was once a beginner. Start today!"}
                 </Text>
             </ScrollView>
+
+            {/* Custom Bottom Tab Bar */}
+            <View style={styles.tabBar}>
+                <TouchableOpacity style={styles.tabItem} activeOpacity={1}>
+                    <Ionicons name="home" size={24} color={COLORS.primary} />
+                    <Text style={[styles.tabText, { color: COLORS.primary }]}>Home</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.tabItem} onPress={() => navigation.navigate('KnowledgeLibrary')} activeOpacity={0.7}>
+                    <Ionicons name="library-outline" size={24} color={COLORS.textMedium} />
+                    <Text style={styles.tabText}>Library</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.tabItem} onPress={() => navigation.navigate('LearningJourney')} activeOpacity={0.7}>
+                    <Ionicons name="map-outline" size={24} color={COLORS.textMedium} />
+                    <Text style={styles.tabText}>Journey</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.tabItem} onPress={() => navigation.navigate('Leaderboard')} activeOpacity={0.7}>
+                    <Ionicons name="trophy-outline" size={24} color={COLORS.textMedium} />
+                    <Text style={styles.tabText}>Rank</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.tabItem} onPress={() => navigation.navigate('Profile')} activeOpacity={0.7}>
+                    <Ionicons name="person-outline" size={24} color={COLORS.textMedium} />
+                    <Text style={styles.tabText}>Profile</Text>
+                </TouchableOpacity>
+            </View>
         </View>
     );
 }
@@ -351,5 +376,24 @@ const styles = StyleSheet.create({
         color: COLORS.textMedium,
         fontStyle: 'italic',
         paddingHorizontal: SPACING.md,
+    },
+    tabBar: {
+        flexDirection: 'row',
+        backgroundColor: COLORS.white,
+        borderTopWidth: 1,
+        borderTopColor: COLORS.border,
+        paddingTop: SPACING.md,
+        paddingBottom: SPACING.xl,
+        justifyContent: 'space-around',
+    },
+    tabItem: {
+        alignItems: 'center',
+        flex: 1,
+    },
+    tabText: {
+        fontSize: FONTS.sizes.xs,
+        marginTop: 4,
+        color: COLORS.textMedium,
+        fontWeight: FONTS.weights.medium,
     },
 });
