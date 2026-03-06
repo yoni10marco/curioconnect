@@ -13,7 +13,7 @@ import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/theme';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useLessonStore } from '../../store/useLessonStore';
-import { AppStackParamList } from '../../navigation';
+import type { AppStackParamList } from '../../navigation';
 import { APP_VERSION } from '../../lib/version';
 
 type Nav = NavigationProp<AppStackParamList>;

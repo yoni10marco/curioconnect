@@ -13,7 +13,7 @@ import MarkdownDisplay from 'react-native-markdown-display';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/theme';
 import { useLessonStore } from '../../store/useLessonStore';
-import { AppStackParamList } from '../../navigation';
+import type { AppStackParamList } from '../../navigation';
 import QuizModal from '../../components/QuizModal';
 
 type Nav = NavigationProp<AppStackParamList>;
