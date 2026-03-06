@@ -66,15 +66,8 @@ export const useLessonStore = create<LessonState>((set) => ({
 
         const DEBUG_ALWAYS_GENERATE_NEW = true; // Set to true to force new Gemini generation
 
-        // 1. Debug flag - delete existing or check for existing
-        if (DEBUG_ALWAYS_GENERATE_NEW) {
-            console.log('DEBUG MODE: Deleting existing lesson for today to force generation');
-            await supabase
-                .from('daily_lessons')
-                .delete()
-                .eq('user_id', session.user.id)
-                .eq('created_at', today);
-        } else {
+        // 1. Check if lesson already exists for today (skip if debugging)
+        if (!DEBUG_ALWAYS_GENERATE_NEW) {
             const { data: existing } = await supabase
                 .from('daily_lessons')
                 .select('*')
@@ -124,6 +117,7 @@ export const useLessonStore = create<LessonState>((set) => ({
                     user_id: session.user.id,
                     access_token: accessToken, // belt-and-suspenders for web
                     difficulty_level: profile?.difficulty_level ?? 'adult',
+                    force_new: DEBUG_ALWAYS_GENERATE_NEW, // tell edge function to delete and regenerate
                 },
             });
 
