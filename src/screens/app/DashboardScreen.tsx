@@ -14,14 +14,13 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/theme';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useLessonStore } from '../../store/useLessonStore';
-import { AppStackParamList } from '../../navigation';
 import { APP_VERSION } from '../../lib/version';
 
-type Nav = NativeStackNavigationProp<AppStackParamList, 'Dashboard'>;
+type Nav = NativeStackNavigationProp<any>;
 
 export default function DashboardScreen() {
     const navigation = useNavigation<Nav>();
-    const { profile, signOut } = useAuthStore();
+    const { profile } = useAuthStore();
     const { fetchOrGenerateLesson, loading, lesson, resetLesson } = useLessonStore();
 
 
@@ -86,9 +85,6 @@ export default function DashboardScreen() {
                             {todayCompleted ? "I studied today! 🎯" : "Ready for today's mission?"}
                         </Text>
                     </View>
-                    <TouchableOpacity onPress={signOut} style={styles.signOutBtn}>
-                        <Text style={styles.signOutText}>Log Out</Text>
-                    </TouchableOpacity>
                 </View>
 
                 {/* Stats Row */}
@@ -213,19 +209,6 @@ const styles = StyleSheet.create({
         fontSize: FONTS.sizes.md,
         color: 'rgba(255,255,255,0.8)',
         marginTop: 2,
-    },
-    signOutBtn: {
-        backgroundColor: '#FFEBEE', // light red
-        paddingHorizontal: SPACING.md,
-        paddingVertical: 6,
-        borderRadius: RADIUS.full,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    signOutText: {
-        fontSize: FONTS.sizes.sm,
-        color: '#D32F2F', // dark red
-        fontWeight: FONTS.weights.bold
     },
     statsRow: {
         flexDirection: 'row',

@@ -147,7 +147,7 @@ export default function LessonReaderScreen() {
                 onComplete={() => {
                     setQuizVisible(false);
                     if (currentPageIndex === lessonPages.length - 1) {
-                        navigation.navigate('Dashboard');
+                        navigation.navigate('Tabs');
                     } else {
                         // Go to next page
                         setCurrentPageIndex(prev => prev + 1);

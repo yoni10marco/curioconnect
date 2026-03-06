@@ -1,12 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { ActivityIndicator, View } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import LoginScreen from '../screens/auth/LoginScreen';
 import InterestSelectionScreen from '../screens/onboarding/InterestSelectionScreen';
 import DashboardScreen from '../screens/app/DashboardScreen';
 import LessonReaderScreen from '../screens/app/LessonReaderScreen';
+import ProfileScreen from '../screens/app/ProfileScreen';
+import KnowledgeLibraryScreen from '../screens/app/KnowledgeLibraryScreen';
+import LeaderboardScreen from '../screens/app/LeaderboardScreen';
+import LearningJourneyScreen from '../screens/app/LearningJourneyScreen';
 
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store/useAuthStore';
@@ -21,14 +27,23 @@ export type OnboardingStackParamList = {
     InterestSelection: undefined;
 };
 
+export type TabParamList = {
+    DashboardHome: undefined;
+    Library: undefined;
+    Journey: undefined;
+    Leaderboard: undefined;
+    Profile: undefined;
+};
+
 export type AppStackParamList = {
-    Dashboard: undefined;
+    Tabs: undefined;
     LessonReader: undefined;
 };
 
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const OnboardingStack = createNativeStackNavigator<OnboardingStackParamList>();
 const AppStack = createNativeStackNavigator<AppStackParamList>();
+const Tab = createBottomTabNavigator<TabParamList>();
 
 function AuthNavigator() {
     return (
@@ -46,6 +61,41 @@ function OnboardingNavigator() {
     );
 }
 
+function TabNavigator() {
+    return (
+        <Tab.Navigator
+            screenOptions={({ route }) => ({
+                headerShown: false,
+                tabBarActiveTintColor: COLORS.primary,
+                tabBarInactiveTintColor: COLORS.textMedium,
+                tabBarStyle: {
+                    borderTopWidth: 1,
+                    borderTopColor: COLORS.border,
+                    backgroundColor: COLORS.white,
+                    elevation: 0,
+                    shadowOpacity: 0,
+                    paddingTop: 8,
+                },
+                tabBarIcon: ({ color, size }) => {
+                    let iconName: keyof typeof MaterialCommunityIcons.glyphMap = 'home';
+                    if (route.name === 'DashboardHome') iconName = 'home-outline';
+                    if (route.name === 'Library') iconName = 'bookshelf';
+                    if (route.name === 'Journey') iconName = 'map-search-outline';
+                    if (route.name === 'Leaderboard') iconName = 'trophy-outline';
+                    if (route.name === 'Profile') iconName = 'account-outline';
+                    return <MaterialCommunityIcons name={iconName} size={size} color={color} />;
+                },
+            })}
+        >
+            <Tab.Screen name="DashboardHome" component={DashboardScreen} options={{ title: 'Home' }} />
+            <Tab.Screen name="Library" component={KnowledgeLibraryScreen} />
+            <Tab.Screen name="Journey" component={LearningJourneyScreen} />
+            <Tab.Screen name="Leaderboard" component={LeaderboardScreen} />
+            <Tab.Screen name="Profile" component={ProfileScreen} />
+        </Tab.Navigator>
+    );
+}
+
 function AppNavigator() {
     return (
         <AppStack.Navigator
@@ -56,8 +106,8 @@ function AppNavigator() {
             }}
         >
             <AppStack.Screen
-                name="Dashboard"
-                component={DashboardScreen}
+                name="Tabs"
+                component={TabNavigator}
                 options={{ headerShown: false }}
             />
             <AppStack.Screen
