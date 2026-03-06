@@ -12,6 +12,20 @@ interface LessonState {
     resetLesson: () => void;
 }
 
+// Always ensure quiz_data is a parsed JS array, never a raw JSON string
+function normalizeLesson(lesson: DailyLesson): DailyLesson {
+    if (!lesson) return lesson;
+    let quiz_data = lesson.quiz_data;
+    if (!Array.isArray(quiz_data)) {
+        try {
+            quiz_data = JSON.parse(quiz_data as unknown as string);
+        } catch {
+            quiz_data = [];
+        }
+    }
+    return { ...lesson, quiz_data };
+}
+
 export const useLessonStore = create<LessonState>((set) => ({
     lesson: null,
     loading: false,
@@ -59,7 +73,7 @@ export const useLessonStore = create<LessonState>((set) => ({
             .single();
 
         if (existing) {
-            set({ lesson: existing as DailyLesson, loading: false });
+            set({ lesson: normalizeLesson(existing as DailyLesson), loading: false });
             return;
         }
 
@@ -103,7 +117,7 @@ export const useLessonStore = create<LessonState>((set) => ({
 
             if (error) throw error;
             if (!data?.lesson) throw new Error('No lesson returned from server');
-            set({ lesson: data.lesson as DailyLesson, loading: false });
+            set({ lesson: normalizeLesson(data.lesson as DailyLesson), loading: false });
         } catch (err: unknown) {
             const message = err instanceof Error ? err.message : 'Failed to generate lesson.';
             set({ loading: false, error: message });
@@ -145,6 +159,6 @@ export const useLessonStore = create<LessonState>((set) => ({
             last_lesson_date: todayStr,
         });
 
-        set({ lesson: { ...lesson, is_completed: true } });
+        set({ lesson: normalizeLesson({ ...lesson, is_completed: true }) });
     },
 }));

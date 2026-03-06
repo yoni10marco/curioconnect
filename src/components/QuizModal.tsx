@@ -150,42 +150,54 @@ export default function QuizModal({ visible, questions, onClose, onComplete }: P
                     </View>
                 ) : (
                     // Question Screen
-                    <Animated.View style={[styles.content, { transform: [{ translateX: shakeAnim }] }]}>
-                        <View style={styles.questionBox}>
-                            <Text style={styles.questionNumber}>Question {current + 1} of {questions.length}</Text>
-                            <Text style={styles.questionText}>{question.q}</Text>
-                        </View>
-
-                        <View style={styles.options}>
-                            {question.options.map((opt, idx) => (
-                                <TouchableOpacity
-                                    key={idx}
-                                    style={getOptionStyle(idx)}
-                                    onPress={() => handleSelect(idx)}
-                                    activeOpacity={0.8}
-                                    disabled={answerState !== 'unanswered'}
-                                >
-                                    <View style={styles.optionLabel}>
-                                        <Text style={styles.optionLetter}>
-                                            {['A', 'B', 'C', 'D'][idx]}
-                                        </Text>
-                                    </View>
-                                    <Text style={getOptionTextStyle(idx)}>{opt}</Text>
-                                </TouchableOpacity>
-                            ))}
-                        </View>
-
-                        {answerState !== 'unanswered' && (
-                            <View style={[styles.feedback, answerState === 'correct' ? styles.feedbackCorrect : styles.feedbackWrong]}>
-                                <Text style={styles.feedbackText}>
-                                    {answerState === 'correct' ? '✅ Correct! Well done!' : `❌ The correct answer was: ${question.options[question.answer_idx]}`}
-                                </Text>
-                                <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
-                                    <Text style={styles.nextButtonText}>
-                                        {current + 1 >= questions.length ? 'See Results' : 'Next Question →'}
-                                    </Text>
+                    <Animated.View key={current} style={[styles.content, { transform: [{ translateX: shakeAnim }] }]}>
+                        {!question ? (
+                            <View style={styles.results}>
+                                <Text style={styles.resultsEmoji}>😕</Text>
+                                <Text style={styles.resultsTitle}>Quiz data error</Text>
+                                <TouchableOpacity style={styles.doneButton} onPress={onClose}>
+                                    <Text style={styles.doneButtonText}>Close</Text>
                                 </TouchableOpacity>
                             </View>
+                        ) : (
+                            <>
+                                <View style={styles.questionBox}>
+                                    <Text style={styles.questionNumber}>Question {current + 1} of {questions.length}</Text>
+                                    <Text style={styles.questionText}>{question.q}</Text>
+                                </View>
+
+                                <View style={styles.options}>
+                                    {question.options.map((opt, idx) => (
+                                        <TouchableOpacity
+                                            key={idx}
+                                            style={getOptionStyle(idx)}
+                                            onPress={() => handleSelect(idx)}
+                                            activeOpacity={0.8}
+                                            disabled={answerState !== 'unanswered'}
+                                        >
+                                            <View style={styles.optionLabel}>
+                                                <Text style={styles.optionLetter}>
+                                                    {['A', 'B', 'C', 'D'][idx]}
+                                                </Text>
+                                            </View>
+                                            <Text style={getOptionTextStyle(idx)}>{opt}</Text>
+                                        </TouchableOpacity>
+                                    ))}
+                                </View>
+
+                                {answerState !== 'unanswered' && (
+                                    <View style={[styles.feedback, answerState === 'correct' ? styles.feedbackCorrect : styles.feedbackWrong]}>
+                                        <Text style={styles.feedbackText}>
+                                            {answerState === 'correct' ? '✅ Correct! Well done!' : `❌ The correct answer was: ${question.options[question.answer_idx]}`}
+                                        </Text>
+                                        <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
+                                            <Text style={styles.nextButtonText}>
+                                                {current + 1 >= questions.length ? 'See Results' : 'Next Question →'}
+                                            </Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                )}
+                            </>
                         )}
                     </Animated.View>
                 )}
