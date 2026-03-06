@@ -82,10 +82,12 @@ export default function DashboardScreen() {
                         <Text style={styles.greeting}>
                             Hey, {profile?.username ?? 'Learner'}! 👋
                         </Text>
-                        <Text style={styles.subGreeting}>Ready for today's mission?</Text>
+                        <Text style={styles.subGreeting}>
+                            {todayCompleted ? "I studied today! 🎯" : "Ready for today's mission?"}
+                        </Text>
                     </View>
                     <TouchableOpacity onPress={signOut} style={styles.signOutBtn}>
-                        <Text style={styles.signOutText}>↩</Text>
+                        <Text style={styles.signOutText}>Log Out</Text>
                     </TouchableOpacity>
                 </View>
 
@@ -213,14 +215,18 @@ const styles = StyleSheet.create({
         marginTop: 2,
     },
     signOutBtn: {
-        backgroundColor: 'rgba(255,255,255,0.2)',
-        width: 36,
-        height: 36,
-        borderRadius: 18,
+        backgroundColor: '#FFEBEE', // light red
+        paddingHorizontal: SPACING.md,
+        paddingVertical: 6,
+        borderRadius: RADIUS.full,
         alignItems: 'center',
         justifyContent: 'center',
     },
-    signOutText: { fontSize: 18 },
+    signOutText: {
+        fontSize: FONTS.sizes.sm,
+        color: '#D32F2F', // dark red
+        fontWeight: FONTS.weights.bold
+    },
     statsRow: {
         flexDirection: 'row',
         backgroundColor: 'rgba(255,255,255,0.15)',

@@ -8,6 +8,7 @@ import {
     Animated,
     SafeAreaView,
     Platform,
+    ScrollView,
 } from 'react-native';
 
 // Haptics are native-only — safe no-op on web
@@ -163,7 +164,10 @@ export default function QuizModal({ visible, questions, isFinalPage, onClose, on
                                 </TouchableOpacity>
                             </View>
                         ) : (
-                            <>
+                            <ScrollView
+                                showsVerticalScrollIndicator={false}
+                                contentContainerStyle={{ paddingBottom: SPACING.xl, flexGrow: 1 }}
+                            >
                                 <View style={styles.questionBox}>
                                     <Text style={styles.questionNumber}>Question {current + 1} of {questions.length}</Text>
                                     <Text style={styles.questionText}>{question.q}</Text>
@@ -195,12 +199,12 @@ export default function QuizModal({ visible, questions, isFinalPage, onClose, on
                                         </Text>
                                         <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
                                             <Text style={styles.nextButtonText}>
-                                                {current + 1 >= questions.length ? 'See Results' : 'Next Question →'}
+                                                {current + 1 >= questions.length ? (isFinalPage ? 'Finish Lesson' : 'See Results') : 'Next Question →'}
                                             </Text>
                                         </TouchableOpacity>
                                     </View>
                                 )}
-                            </>
+                            </ScrollView>
                         )}
                     </Animated.View>
                 )}
