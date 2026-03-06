@@ -64,18 +64,30 @@ export const useLessonStore = create<LessonState>((set) => ({
 
         const today = new Date().toISOString().split('T')[0];
 
-        // 1. Check if lesson already exists for today
-        const { data: existing } = await supabase
-            .from('daily_lessons')
-            .select('*')
-            .eq('user_id', session.user.id)
-            .eq('created_at', today)
-            .single();
+        const DEBUG_ALWAYS_GENERATE_NEW = true; // Set to true to force new Gemini generation
 
-        if (existing) {
-            set({ lesson: normalizeLesson(existing as DailyLesson), loading: false });
-            return;
+        // 1. Debug flag - delete existing or check for existing
+        if (DEBUG_ALWAYS_GENERATE_NEW) {
+            console.log('DEBUG MODE: Deleting existing lesson for today to force generation');
+            await supabase
+                .from('daily_lessons')
+                .delete()
+                .eq('user_id', session.user.id)
+                .eq('created_at', today);
+        } else {
+            const { data: existing } = await supabase
+                .from('daily_lessons')
+                .select('*')
+                .eq('user_id', session.user.id)
+                .eq('created_at', today)
+                .single();
+
+            if (existing) {
+                set({ lesson: normalizeLesson(existing as DailyLesson), loading: false });
+                return;
+            }
         }
+
 
         // 2. Pick a random topic not in user history
         const { data: usedTopics } = await supabase

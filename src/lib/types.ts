@@ -26,13 +26,18 @@ export type QuizQuestion = {
     answer_idx: number;
 };
 
+export type PageData = {
+    text: string;
+    questions: QuizQuestion[];
+};
+
 export type DailyLesson = {
     id: string;
     user_id: string;
     topic_id: string | null;
     title: string;
     content_markdown: string;
-    quiz_data: QuizQuestion[];
+    quiz_data: PageData[];
     is_completed: boolean;
     created_at: string;
 };

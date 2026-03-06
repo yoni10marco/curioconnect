@@ -27,13 +27,14 @@ import { useLessonStore } from '../store/useLessonStore';
 interface Props {
     visible: boolean;
     questions: QuizQuestion[];
+    isFinalPage: boolean;
     onClose: () => void;
     onComplete: () => void;
 }
 
 type AnswerState = 'unanswered' | 'correct' | 'wrong';
 
-export default function QuizModal({ visible, questions, onClose, onComplete }: Props) {
+export default function QuizModal({ visible, questions, isFinalPage, onClose, onComplete }: Props) {
     const [current, setCurrent] = useState(0);
     const [selected, setSelected] = useState<number | null>(null);
     const [answerState, setAnswerState] = useState<AnswerState>('unanswered');
@@ -71,7 +72,9 @@ export default function QuizModal({ visible, questions, onClose, onComplete }: P
         const nextIdx = current + 1;
         if (nextIdx >= questions.length) {
             setFinished(true);
-            await completeLesson();
+            if (isFinalPage) {
+                await completeLesson();
+            }
         } else {
             setCurrent(nextIdx);
             setSelected(null);
@@ -136,16 +139,16 @@ export default function QuizModal({ visible, questions, onClose, onComplete }: P
                     // Results Screen
                     <View style={styles.results}>
                         <Text style={styles.resultsEmoji}>
-                            {score === questions.length ? '🏆' : score >= 2 ? '🌟' : '💪'}
+                            {isFinalPage ? (score === questions.length ? '🏆' : '🌟') : '📖'}
                         </Text>
                         <Text style={styles.resultsTitle}>
-                            {score === questions.length ? 'Perfect Score!' : score >= 2 ? 'Great Job!' : 'Good Effort!'}
+                            {isFinalPage ? 'Lesson Complete!' : 'Knowledge Checked!'}
                         </Text>
                         <Text style={styles.resultsScore}>{score} / {questions.length} correct</Text>
-                        <Text style={styles.resultsXp}>+50 XP Earned! 🎉</Text>
-                        <Text style={styles.resultsStreak}>Your streak is growing! 🔥</Text>
+                        {isFinalPage && <Text style={styles.resultsXp}>+50 XP Earned! 🎉</Text>}
+                        {isFinalPage && <Text style={styles.resultsStreak}>Your streak is growing! 🔥</Text>}
                         <TouchableOpacity style={styles.doneButton} onPress={handleRestartAndClose}>
-                            <Text style={styles.doneButtonText}>Back to Dashboard</Text>
+                            <Text style={styles.doneButtonText}>{isFinalPage ? 'Back to Dashboard' : 'Read Next Page'}</Text>
                         </TouchableOpacity>
                     </View>
                 ) : (
