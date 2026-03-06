@@ -123,7 +123,7 @@ function AppNavigator() {
 }
 
 export default function RootNavigator() {
-    const { session, setSession, fetchProfile, profile } = useAuthStore();
+    const { session, setSession, fetchProfile, profile, initialized } = useAuthStore();
     const [hasInterests, setHasInterests] = useState<boolean | null>(null);
     const [checkingInterests, setCheckingInterests] = useState(false);
 
@@ -162,7 +162,7 @@ export default function RootNavigator() {
     }, [session, profile]);
 
     // Show loading spinner while determining state
-    if (!useAuthStore.getState().initialized || checkingInterests) {
+    if (!initialized || checkingInterests) {
         return (
             <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.white }}>
                 <ActivityIndicator size="large" color={COLORS.primary} />
