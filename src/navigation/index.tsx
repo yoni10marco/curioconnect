@@ -78,7 +78,7 @@ function MainTabNavigator() {
                     paddingTop: 5,
                     height: 60,
                 },
-                /* tabBarIcon: ({ focused, color, size }) => {
+                tabBarIcon: ({ focused, color, size }) => {
                     let iconName: keyof typeof Ionicons.glyphMap = 'home';
                     if (route.name === 'DashboardTab') {
                         iconName = focused ? 'home' : 'home-outline';
@@ -92,7 +92,7 @@ function MainTabNavigator() {
                         iconName = focused ? 'person' : 'person-outline';
                     }
                     return <Ionicons name={iconName} size={size} color={color} />;
-                }, */
+                },
             })}
         >
             <Tab.Screen
