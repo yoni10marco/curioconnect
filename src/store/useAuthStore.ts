@@ -63,7 +63,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     },
 
     updateProfile: async (updates) => {
-        const { session } = get();
+        const { session, profile } = get();
         if (!session) return;
         const { data } = await supabase
             .from('profiles')
@@ -71,6 +71,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             .eq('id', session.user.id)
             .select()
             .single();
-        if (data) set({ profile: data as Profile });
+        // Always update in-memory state — use server data if available, else merge locally
+        set({ profile: (data ?? (profile ? { ...profile, ...updates } : null)) as Profile | null });
     },
 }));

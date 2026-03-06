@@ -9,7 +9,7 @@ import {
     Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/theme';
 import { useAuthStore } from '../../store/useAuthStore';
@@ -21,15 +21,8 @@ type Nav = NativeStackNavigationProp<AppStackParamList, 'Dashboard'>;
 
 export default function DashboardScreen() {
     const navigation = useNavigation<Nav>();
-    const { profile, signOut, fetchProfile, session } = useAuthStore();
+    const { profile, signOut } = useAuthStore();
     const { fetchOrGenerateLesson, loading, lesson, resetLesson } = useLessonStore();
-
-    // Re-fetch profile every time this screen comes into focus (e.g. returning from quiz)
-    useFocusEffect(
-        React.useCallback(() => {
-            if (session?.user.id) fetchProfile(session.user.id);
-        }, [session?.user.id])
-    );
 
 
     // Streak fire pulse animation
