@@ -22,18 +22,30 @@ export const useLessonStore = create<LessonState>((set) => ({
     fetchOrGenerateLesson: async () => {
         set({ loading: true, error: null });
 
-        const { session, profile } = useAuthStore.getState();
-        if (!session || !profile) {
-            set({ loading: false, error: 'Not authenticated' });
+        let { session, profile } = useAuthStore.getState();
+
+        // Get a fresh session — AsyncStorage may not have hydrated the client yet
+        const { data: sessionData } = await supabase.auth.getSession();
+        session = sessionData.session ?? session;
+
+        if (!session) {
+            set({ loading: false, error: 'Not authenticated. Please log in again.' });
             return;
         }
 
-        // Always get a fresh token — AsyncStorage may not have hydrated the client yet
-        const { data: sessionData } = await supabase.auth.getSession();
-        const accessToken = sessionData.session?.access_token ?? session.access_token;
-        if (!accessToken) {
-            set({ loading: false, error: 'Session expired. Please log in again.' });
-            return;
+        const accessToken = session.access_token;
+
+        // Profile may not be loaded yet (race condition after login) — fetch it
+        if (!profile) {
+            const { data: profileData } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', session.user.id)
+                .single();
+            if (profileData) {
+                useAuthStore.getState().fetchProfile(session.user.id);
+                profile = profileData;
+            }
         }
 
         const today = new Date().toISOString().split('T')[0];
@@ -84,7 +96,7 @@ export const useLessonStore = create<LessonState>((set) => ({
                     topic_name: randomTopic?.name ?? 'Science',
                     interest_name: randomInterest?.interest_name ?? 'general knowledge',
                     user_id: session.user.id,
-                    difficulty_level: profile.difficulty_level ?? 'adult',
+                    difficulty_level: profile?.difficulty_level ?? 'adult',
                 },
             });
 
