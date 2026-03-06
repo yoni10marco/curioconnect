@@ -86,7 +86,7 @@ export const useLessonStore = create<LessonState>((set) => ({
             ? interests[Math.floor(Math.random() * interests.length)]
             : null;
 
-        // 4. Call Edge Function — explicitly pass Authorization header to fix 401 on web
+        // 4. Call Edge Function — pass token in both header AND body (verify_jwt is now off, function validates internally)
         try {
             const { data, error } = await supabase.functions.invoke('generate-lesson', {
                 headers: {
@@ -96,6 +96,7 @@ export const useLessonStore = create<LessonState>((set) => ({
                     topic_name: randomTopic?.name ?? 'Science',
                     interest_name: randomInterest?.interest_name ?? 'general knowledge',
                     user_id: session.user.id,
+                    access_token: accessToken, // belt-and-suspenders for web
                     difficulty_level: profile?.difficulty_level ?? 'adult',
                 },
             });
