@@ -26,6 +26,13 @@ export default function LessonReaderScreen() {
     const [quizVisible, setQuizVisible] = useState(false);
     const progressAnim = useRef(new Animated.Value(0)).current;
 
+    // quiz_data may arrive from Supabase as a JSON string on web — parse it
+    const quizQuestions = React.useMemo(() => {
+        if (!lesson?.quiz_data) return [];
+        if (Array.isArray(lesson.quiz_data)) return lesson.quiz_data;
+        try { return JSON.parse(lesson.quiz_data as unknown as string); } catch { return []; }
+    }, [lesson?.quiz_data]);
+
     const handleScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
         const { contentOffset, contentSize, layoutMeasurement } = e.nativeEvent;
         const scrolled = contentOffset.y / (contentSize.height - layoutMeasurement.height);
@@ -107,7 +114,7 @@ export default function LessonReaderScreen() {
             {/* Quiz Modal */}
             <QuizModal
                 visible={quizVisible}
-                questions={lesson.quiz_data}
+                questions={quizQuestions}
                 onClose={() => setQuizVisible(false)}
                 onComplete={() => {
                     setQuizVisible(false);
