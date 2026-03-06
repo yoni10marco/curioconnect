@@ -37,8 +37,8 @@ export default function DashboardScreen() {
         );
         const glow = Animated.loop(
             Animated.sequence([
-                Animated.timing(glowAnim, { toValue: 1, duration: 1000, useNativeDriver: false }),
-                Animated.timing(glowAnim, { toValue: 0, duration: 1000, useNativeDriver: false }),
+                Animated.timing(glowAnim, { toValue: 1, duration: 1000, useNativeDriver: true }),
+                Animated.timing(glowAnim, { toValue: 0, duration: 1000, useNativeDriver: true }),
             ])
         );
         if ((profile?.streak_count ?? 0) > 0) {
