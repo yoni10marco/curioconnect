@@ -15,9 +15,7 @@ import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/theme';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useLessonStore } from '../../store/useLessonStore';
 import { AppStackParamList } from '../../navigation';
-import Constants from 'expo-constants';
-
-const APP_VERSION = Constants.expoConfig?.version ?? '0.1.0';
+import { APP_VERSION } from '../../lib/version';
 
 type Nav = NativeStackNavigationProp<AppStackParamList, 'Dashboard'>;
 
