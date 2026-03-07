@@ -32,22 +32,27 @@ export default function ProfileScreen() {
     const [ageInput, setAgeInput] = useState(profile?.age?.toString() ?? '');
     const [jobInput, setJobInput] = useState(profile?.job_title ?? '');
 
+    // AI Discovery Fields
+    const [aiPrompt, setAiPrompt] = useState('');
+    const [aiLoading, setAiLoading] = useState(false);
+
     const navigation = useNavigation();
 
-    useEffect(() => {
-        const fetchInterests = async () => {
-            if (!session) return;
-            const { data, error } = await supabase
-                .from('user_interests')
-                .select('interest_name')
-                .eq('user_id', session.user.id);
+    const fetchInterests = async () => {
+        if (!session) return;
+        const { data, error } = await supabase
+            .from('user_interests')
+            .select('interest_name')
+            .eq('user_id', session.user.id);
 
-            if (!error && data) {
-                const loaded = new Set(data.map(r => r.interest_name));
-                setSelected(loaded);
-            }
-            setLoading(false);
-        };
+        if (!error && data) {
+            const loaded = new Set(data.map(r => r.interest_name));
+            setSelected(loaded);
+        }
+        setLoading(false);
+    };
+
+    useEffect(() => {
         fetchInterests();
     }, [session]);
 
@@ -58,6 +63,25 @@ export default function ProfileScreen() {
             else next.add(interest);
             return next;
         });
+    };
+
+    const handleAskAI = async () => {
+        if (!aiPrompt.trim()) return;
+        setAiLoading(true);
+
+        const { data, error } = await supabase.functions.invoke('discover-interests', {
+            body: { prompt: aiPrompt.trim() },
+        });
+
+        if (error) {
+            console.error(error);
+            Alert.alert('Error', 'Failed to discover interests.');
+        } else {
+            Alert.alert('Success', `Discovered new interests! Adding to your profile...`);
+            setAiPrompt('');
+            await fetchInterests(); // Reload list to show newly added DB interests
+        }
+        setAiLoading(false);
     };
 
     const handleSave = async () => {
@@ -139,23 +163,33 @@ export default function ProfileScreen() {
                     />
                 </View>
 
-                {/* AI Prompt (Coming Soon) */}
+                {/* AI Prompt */}
                 <View style={styles.card}>
-                    <View style={styles.cardHeader}>
-                        <Text style={styles.cardTitle}>✨ AI Discover Interests</Text>
-                        <View style={styles.comingSoonBadge}>
-                            <Text style={styles.comingSoonText}>Coming Soon</Text>
-                        </View>
-                    </View>
+                    <Text style={styles.cardTitle}>✨ AI Discover Interests</Text>
                     <Text style={styles.cardDesc}>
                         Prompt our AI to discover new niche interests tailored exactly to your vibe.
                     </Text>
-                    <TextInput
-                        style={styles.disabledInput}
-                        placeholder="e.g. I like solving mysteries and baking..."
-                        placeholderTextColor={COLORS.textLight}
-                        editable={false}
-                    />
+                    <View style={styles.aiInputRow}>
+                        <TextInput
+                            style={[styles.textInput, { flex: 1, marginBottom: 0 }]}
+                            placeholder="e.g. I like solving mysteries..."
+                            placeholderTextColor={COLORS.textLight}
+                            value={aiPrompt}
+                            onChangeText={setAiPrompt}
+                        />
+                        <TouchableOpacity
+                            style={styles.aiBtn}
+                            onPress={handleAskAI}
+                            disabled={aiLoading || !aiPrompt.trim()}
+                            activeOpacity={0.8}
+                        >
+                            {aiLoading ? (
+                                <ActivityIndicator color={COLORS.white} size="small" />
+                            ) : (
+                                <Text style={styles.aiBtnText}>Ask</Text>
+                            )}
+                        </TouchableOpacity>
+                    </View>
                 </View>
 
                 {/* Edit Interests */}
@@ -253,6 +287,24 @@ const styles = StyleSheet.create({
         fontSize: FONTS.sizes.md,
         color: COLORS.textDark,
         marginBottom: SPACING.md,
+    },
+    aiInputRow: {
+        flexDirection: 'row',
+        gap: SPACING.sm,
+        alignItems: 'center',
+    },
+    aiBtn: {
+        backgroundColor: COLORS.primary,
+        borderRadius: RADIUS.md,
+        paddingHorizontal: SPACING.lg,
+        height: 50,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    aiBtnText: {
+        color: COLORS.white,
+        fontSize: FONTS.sizes.md,
+        fontWeight: FONTS.weights.bold,
     },
     grid: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm },
     chip: {
