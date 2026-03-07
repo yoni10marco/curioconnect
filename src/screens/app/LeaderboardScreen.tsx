@@ -1,33 +1,107 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/theme';
 import BottomNav from '../../components/BottomNav';
+import { supabase } from '../../lib/supabase';
+import { Profile } from '../../lib/types';
+import { useAuthStore } from '../../store/useAuthStore';
+
+type Tab = 'xp' | 'streak';
 
 export default function LeaderboardScreen() {
     const navigation = useNavigation();
+    const { session } = useAuthStore();
+    const [activeTab, setActiveTab] = useState<Tab>('xp');
+    const [leaders, setLeaders] = useState<Profile[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchLeaderboard = async () => {
+            setLoading(true);
+            const column = activeTab === 'xp' ? 'total_xp' : 'streak_count';
+
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('*')
+                .order(column, { ascending: false })
+                .limit(50);
+
+            if (!error && data) {
+                setLeaders(data as Profile[]);
+            }
+            setLoading(false);
+        };
+
+        fetchLeaderboard();
+    }, [activeTab]);
+
+    const renderMedal = (index: number) => {
+        if (index === 0) return '🥇';
+        if (index === 1) return '🥈';
+        if (index === 2) return '🥉';
+        return `${index + 1}`;
+    };
 
     return (
         <View style={styles.container}>
-            <View style={styles.content}>
-                <Text style={styles.emoji}>🏆</Text>
-                <Text style={styles.title}>Leaderboard</Text>
-                <View style={styles.comingSoonBadge}>
-                    <Text style={styles.comingSoonText}>Coming Soon</Text>
-                </View>
-                <Text style={styles.description}>
-                    Compete with friends and other learners.
-                    Earn XP and climb the ranks to the top of the leaderboard!
-                </Text>
+            {/* Header Area */}
+            <View style={styles.header}>
+                <Text style={styles.headerTitle}>Leaderboard 🏆</Text>
 
-                <TouchableOpacity
-                    style={styles.backButton}
-                    onPress={() => navigation.navigate('Dashboard' as never)}
-                    activeOpacity={0.8}
-                >
-                    <Text style={styles.backButtonText}>Back to Dashboard</Text>
-                </TouchableOpacity>
+                {/* Custom Segment Control */}
+                <View style={styles.segmentContainer}>
+                    <TouchableOpacity
+                        style={[styles.segmentBtn, activeTab === 'xp' && styles.segmentBtnActive]}
+                        onPress={() => setActiveTab('xp')}
+                        activeOpacity={0.8}
+                    >
+                        <Text style={[styles.segmentText, activeTab === 'xp' && styles.segmentTextActive]}>⭐ Total XP</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={[styles.segmentBtn, activeTab === 'streak' && styles.segmentBtnActive]}
+                        onPress={() => setActiveTab('streak')}
+                        activeOpacity={0.8}
+                    >
+                        <Text style={[styles.segmentText, activeTab === 'streak' && styles.segmentTextActive]}>🔥 Streak</Text>
+                    </TouchableOpacity>
+                </View>
             </View>
+
+            {/* List Area */}
+            <View style={styles.listContainer}>
+                {loading ? (
+                    <ActivityIndicator size="large" color={COLORS.primary} style={{ marginTop: 40 }} />
+                ) : (
+                    <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+                        {leaders.length === 0 ? (
+                            <Text style={styles.emptyText}>No users found.</Text>
+                        ) : (
+                            leaders.map((user, index) => {
+                                const isMe = session?.user?.id === user.id;
+                                const val = activeTab === 'xp' ? user.total_xp : user.streak_count;
+
+                                return (
+                                    <View key={user.id} style={[styles.userRow, isMe && styles.myRow]}>
+                                        <View style={styles.rankBox}>
+                                            <Text style={styles.rankText}>{renderMedal(index)}</Text>
+                                        </View>
+                                        <View style={styles.userInfo}>
+                                            <Text style={[styles.username, isMe && styles.myUsername]}>
+                                                {user.username || 'Anonymous'} {isMe && '(You)'}
+                                            </Text>
+                                        </View>
+                                        <Text style={styles.statScore}>
+                                            {val} {activeTab === 'xp' ? 'XP' : 'Days'}
+                                        </Text>
+                                    </View>
+                                );
+                            })
+                        )}
+                    </ScrollView>
+                )}
+            </View>
+
             <BottomNav currentRoute="Leaderboard" />
         </View>
     );
@@ -38,67 +112,106 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: COLORS.background,
     },
-    content: {
-        flex: 1,
+    header: {
+        paddingTop: 60,
+        paddingHorizontal: SPACING.lg,
+        paddingBottom: SPACING.md,
         backgroundColor: COLORS.white,
         borderBottomLeftRadius: RADIUS.xl,
         borderBottomRightRadius: RADIUS.xl,
-        padding: SPACING.xl,
-        justifyContent: 'center',
-        alignItems: 'center',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 12,
-        elevation: 5,
+        shadowOpacity: 0.05,
+        shadowRadius: 10,
+        elevation: 3,
+        zIndex: 10,
     },
-    emoji: {
-        fontSize: 64,
-        marginBottom: SPACING.md,
-    },
-    title: {
+    headerTitle: {
         fontSize: FONTS.sizes.xxl,
         fontWeight: FONTS.weights.heavy,
         color: COLORS.textDark,
-        marginBottom: SPACING.sm,
-    },
-    comingSoonBadge: {
-        backgroundColor: '#FFF3E0', // Light Orange
-        paddingHorizontal: SPACING.md,
-        paddingVertical: 6,
-        borderRadius: RADIUS.full,
         marginBottom: SPACING.lg,
     },
-    comingSoonText: {
-        color: '#F57C00', // Dark Orange
-        fontSize: FONTS.sizes.sm,
-        fontWeight: FONTS.weights.bold,
-        textTransform: 'uppercase',
-        letterSpacing: 1,
-    },
-    description: {
-        fontSize: FONTS.sizes.md,
-        color: COLORS.textMedium,
-        textAlign: 'center',
-        lineHeight: 24,
-        marginBottom: SPACING.xl,
-    },
-    backButton: {
-        backgroundColor: COLORS.primary,
-        paddingHorizontal: SPACING.xl,
-        paddingVertical: SPACING.md,
+    segmentContainer: {
+        flexDirection: 'row',
+        backgroundColor: COLORS.background,
         borderRadius: RADIUS.lg,
-        shadowColor: COLORS.primary,
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-        elevation: 4,
-        width: '100%',
-        alignItems: 'center',
+        padding: 4,
     },
-    backButtonText: {
-        color: COLORS.white,
+    segmentBtn: {
+        flex: 1,
+        paddingVertical: 10,
+        alignItems: 'center',
+        borderRadius: RADIUS.md,
+    },
+    segmentBtnActive: {
+        backgroundColor: COLORS.white,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 2,
+    },
+    segmentText: {
+        fontSize: FONTS.sizes.sm,
+        color: COLORS.textMedium,
+        fontWeight: FONTS.weights.bold,
+    },
+    segmentTextActive: {
+        color: COLORS.primaryDark,
+    },
+    listContainer: {
+        flex: 1,
+    },
+    scrollContent: {
+        padding: SPACING.lg,
+        paddingBottom: 100, // accommodate bottom nav
+        gap: SPACING.md,
+    },
+    userRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: COLORS.white,
+        padding: SPACING.md,
+        borderRadius: RADIUS.lg,
+    },
+    myRow: {
+        backgroundColor: '#E8EAF6', // light indigo
+        borderWidth: 1,
+        borderColor: COLORS.primary,
+    },
+    rankBox: {
+        width: 40,
+        height: 40,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: SPACING.md,
+    },
+    rankText: {
+        fontSize: FONTS.sizes.lg,
+        fontWeight: FONTS.weights.bold,
+        color: COLORS.textMedium,
+    },
+    userInfo: {
+        flex: 1,
+    },
+    username: {
         fontSize: FONTS.sizes.md,
         fontWeight: FONTS.weights.bold,
+        color: COLORS.textDark,
+    },
+    myUsername: {
+        color: COLORS.primaryDark,
+    },
+    statScore: {
+        fontSize: FONTS.sizes.lg,
+        fontWeight: FONTS.weights.heavy,
+        color: COLORS.primary,
+    },
+    emptyText: {
+        textAlign: 'center',
+        marginTop: 40,
+        color: COLORS.textMedium,
+        fontSize: FONTS.sizes.md,
     },
 });
