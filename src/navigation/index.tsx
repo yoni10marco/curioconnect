@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { ActivityIndicator, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 import LoginScreen from '../screens/auth/LoginScreen';
 import InterestSelectionScreen from '../screens/onboarding/InterestSelectionScreen';
@@ -16,7 +18,6 @@ import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store/useAuthStore';
 import { COLORS } from '../lib/theme';
 
-// Type exports for screens
 export type AuthStackParamList = {
     Login: undefined;
 };
@@ -25,17 +26,23 @@ export type OnboardingStackParamList = {
     InterestSelection: undefined;
 };
 
-export type AppStackParamList = {
+// Tabs
+export type MainTabParamList = {
     Dashboard: undefined;
-    LessonReader: undefined;
-    Profile: undefined;
-    Leaderboard: undefined;
     LearningJourney: undefined;
     KnowledgeLibrary: undefined;
+    Leaderboard: undefined;
+    Profile: undefined;
+};
+
+export type AppStackParamList = {
+    MainTabs: undefined;
+    LessonReader: undefined;
 };
 
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const OnboardingStack = createNativeStackNavigator<OnboardingStackParamList>();
+const MainTab = createBottomTabNavigator<MainTabParamList>();
 const AppStack = createNativeStackNavigator<AppStackParamList>();
 
 function AuthNavigator() {
@@ -54,6 +61,40 @@ function OnboardingNavigator() {
     );
 }
 
+function MainTabNavigator() {
+    return (
+        <MainTab.Navigator
+            screenOptions={({ route }) => ({
+                headerShown: false,
+                tabBarActiveTintColor: COLORS.primary,
+                tabBarInactiveTintColor: COLORS.textMedium,
+                tabBarStyle: {
+                    borderTopWidth: 1,
+                    borderTopColor: COLORS.border,
+                    backgroundColor: COLORS.white,
+                    height: 60,
+                    paddingBottom: 8,
+                },
+                tabBarIcon: ({ color, size }) => {
+                    let iconName = 'home';
+                    if (route.name === 'Dashboard') iconName = 'home';
+                    else if (route.name === 'LearningJourney') iconName = 'analytics';
+                    else if (route.name === 'KnowledgeLibrary') iconName = 'library';
+                    else if (route.name === 'Leaderboard') iconName = 'trophy';
+                    else if (route.name === 'Profile') iconName = 'person';
+                    return <Ionicons name={iconName as any} size={size} color={color} />;
+                },
+            })}
+        >
+            <MainTab.Screen name="Dashboard" component={DashboardScreen} options={{ title: 'Home' }} />
+            <MainTab.Screen name="LearningJourney" component={LearningJourneyScreen} options={{ title: 'Journey' }} />
+            <MainTab.Screen name="KnowledgeLibrary" component={KnowledgeLibraryScreen} options={{ title: 'Library' }} />
+            <MainTab.Screen name="Leaderboard" component={LeaderboardScreen} options={{ title: 'Ranking' }} />
+            <MainTab.Screen name="Profile" component={ProfileScreen} options={{ title: 'Profile' }} />
+        </MainTab.Navigator>
+    );
+}
+
 function AppNavigator() {
     return (
         <AppStack.Navigator
@@ -64,8 +105,8 @@ function AppNavigator() {
             }}
         >
             <AppStack.Screen
-                name="Dashboard"
-                component={DashboardScreen}
+                name="MainTabs"
+                component={MainTabNavigator}
                 options={{ headerShown: false }}
             />
             <AppStack.Screen
@@ -73,32 +114,6 @@ function AppNavigator() {
                 component={LessonReaderScreen}
                 options={{
                     title: 'Today\'s Lesson',
-                    headerBackTitle: 'Dashboard',
-                }}
-            />
-            <AppStack.Screen
-                name="Profile"
-                component={ProfileScreen}
-                options={{
-                    title: 'Profile',
-                    headerBackTitle: 'Back',
-                }}
-            />
-            <AppStack.Screen
-                name="Leaderboard"
-                component={LeaderboardScreen}
-                options={{ headerShown: false }}
-            />
-            <AppStack.Screen
-                name="LearningJourney"
-                component={LearningJourneyScreen}
-                options={{ headerShown: false }}
-            />
-            <AppStack.Screen
-                name="KnowledgeLibrary"
-                component={KnowledgeLibraryScreen}
-                options={{
-                    title: 'Knowledge Library',
                     headerBackTitle: 'Dashboard',
                 }}
             />
@@ -111,7 +126,6 @@ export default function RootNavigator() {
     const [hasInterests, setHasInterests] = useState<boolean | null>(null);
     const [checkingInterests, setCheckingInterests] = useState(false);
 
-    // Listen for auth state changes
     useEffect(() => {
         supabase.auth.getSession().then(({ data: { session } }) => {
             setSession(session);
@@ -126,7 +140,6 @@ export default function RootNavigator() {
         return () => subscription.unsubscribe();
     }, []);
 
-    // Check if user has completed onboarding (has interests)
     useEffect(() => {
         const checkInterests = async () => {
             if (!session) {
@@ -145,7 +158,6 @@ export default function RootNavigator() {
         checkInterests();
     }, [session, profile]);
 
-    // Show loading spinner while determining state
     if (!useAuthStore.getState().initialized || checkingInterests) {
         return (
             <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.white }}>

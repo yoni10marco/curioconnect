@@ -25,6 +25,7 @@ export default function LessonReaderScreen() {
     const [progress, setProgress] = useState(0);
     const [quizVisible, setQuizVisible] = useState(false);
     const [currentPageIndex, setCurrentPageIndex] = useState(0);
+    const [isFinished, setIsFinished] = useState(false);
     const progressAnim = useRef(new Animated.Value(0)).current;
     const scrollViewRef = useRef<ScrollView>(null);
 
@@ -77,6 +78,27 @@ export default function LessonReaderScreen() {
                 <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
                     <Text style={styles.backBtnText}>← Go Back</Text>
                 </TouchableOpacity>
+            </View>
+        );
+    }
+
+    if (isFinished) {
+        return (
+            <View style={styles.container}>
+                <View style={styles.finishContent}>
+                    <Text style={styles.finishEmoji}>🎉</Text>
+                    <Text style={styles.finishTitle}>Lesson Complete!</Text>
+                    <Text style={styles.finishDesc}>
+                        Awesome work! You've successfully completely this interactive lesson and earned +50 XP.
+                    </Text>
+
+                    <TouchableOpacity
+                        style={styles.finishButton}
+                        onPress={() => navigation.reset({ index: 0, routes: [{ name: 'MainTabs' as never }] })}
+                    >
+                        <Text style={styles.finishButtonText}>Back to Home</Text>
+                    </TouchableOpacity>
+                </View>
             </View>
         );
     }
@@ -147,7 +169,7 @@ export default function LessonReaderScreen() {
                 onComplete={() => {
                     setQuizVisible(false);
                     if (currentPageIndex === lessonPages.length - 1) {
-                        navigation.navigate('Dashboard');
+                        setIsFinished(true);
                     } else {
                         // Go to next page
                         setCurrentPageIndex(prev => prev + 1);
@@ -164,6 +186,47 @@ export default function LessonReaderScreen() {
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: COLORS.white },
+    finishContent: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: SPACING.xl,
+    },
+    finishEmoji: {
+        fontSize: 72,
+        marginBottom: SPACING.md,
+    },
+    finishTitle: {
+        fontSize: FONTS.sizes.xxl,
+        fontWeight: FONTS.weights.heavy,
+        color: COLORS.textDark,
+        marginBottom: SPACING.sm,
+    },
+    finishDesc: {
+        fontSize: FONTS.sizes.md,
+        color: COLORS.textMedium,
+        textAlign: 'center',
+        lineHeight: 24,
+        marginBottom: SPACING.xxl,
+    },
+    finishButton: {
+        backgroundColor: COLORS.primary,
+        paddingHorizontal: SPACING.xxl,
+        paddingVertical: SPACING.md,
+        borderRadius: RADIUS.lg,
+        shadowColor: COLORS.primary,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 6,
+        width: '100%',
+        alignItems: 'center',
+    },
+    finishButtonText: {
+        color: COLORS.white,
+        fontSize: FONTS.sizes.lg,
+        fontWeight: FONTS.weights.bold,
+    },
     progressTrack: {
         height: 6,
         backgroundColor: COLORS.border,
