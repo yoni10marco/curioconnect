@@ -20,11 +20,19 @@ const ALL_INTERESTS = [
     '🧘 Yoga', '🏄 Surfing', '🎲 Board Games', '🌌 Space', '🎭 Theater',
 ];
 
+const LEVELS = [
+    { id: 'child', label: '🧒 Child', desc: 'Simple & Fun' },
+    { id: 'beginner', label: '🎓 High Schooler', desc: 'Beginner' },
+    { id: 'intermediate', label: '🏛️ College', desc: 'Intermediate' },
+    { id: 'advanced', label: '🧠 Expert', desc: 'Advanced' },
+];
+
 export default function InterestSelectionScreen() {
     const [selected, setSelected] = useState<Set<string>>(new Set());
     const [saving, setSaving] = useState(false);
     const [ageInput, setAgeInput] = useState('');
     const [jobInput, setJobInput] = useState('');
+    const [difficulty, setDifficulty] = useState('beginner');
     const { session, fetchProfile, updateProfile } = useAuthStore();
 
     const toggle = (interest: string) => {
@@ -56,9 +64,10 @@ export default function InterestSelectionScreen() {
             return;
         }
 
-        // Save age and job if provided
+        // Save age, job, and difficulty level
         const parsedAge = parseInt(ageInput, 10);
         await updateProfile({
+            difficulty_level: difficulty,
             ...(ageInput && !isNaN(parsedAge) && { age: parsedAge }),
             ...(jobInput.trim() && { job_title: jobInput.trim() }),
         });
@@ -78,6 +87,23 @@ export default function InterestSelectionScreen() {
                 </Text>
 
                 <View style={styles.inputCard}>
+                    <Text style={styles.sectionHeading}>I am a...</Text>
+                    <View style={styles.levelContainer}>
+                        {LEVELS.map(l => (
+                            <TouchableOpacity
+                                key={l.id}
+                                style={[styles.levelBtn, difficulty === l.id && styles.levelBtnActive]}
+                                onPress={() => setDifficulty(l.id)}
+                                activeOpacity={0.8}
+                            >
+                                <Text style={[styles.levelLabel, difficulty === l.id && styles.levelLabelActive]}>{l.label}</Text>
+                                <Text style={[styles.levelDesc, difficulty === l.id && styles.levelDescActive]}>{l.desc}</Text>
+                            </TouchableOpacity>
+                        ))}
+                    </View>
+                </View>
+
+                <View style={[styles.inputCard, { marginBottom: SPACING.md }]}>
                     <Text style={styles.sectionHeading}>Tell us about yourself (Optional)</Text>
                     <TextInput
                         style={styles.textInput}
@@ -188,6 +214,41 @@ const styles = StyleSheet.create({
         fontWeight: FONTS.weights.bold,
         color: COLORS.accent,
         marginBottom: -SPACING.md,
+    },
+    levelContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: SPACING.sm,
+    },
+    levelBtn: {
+        flex: 1,
+        minWidth: '45%',
+        backgroundColor: 'rgba(255,255,255,0.15)',
+        borderRadius: RADIUS.md,
+        padding: SPACING.md,
+        alignItems: 'center',
+        borderWidth: 2,
+        borderColor: 'transparent',
+    },
+    levelBtnActive: {
+        backgroundColor: COLORS.white,
+        borderColor: COLORS.accent,
+    },
+    levelLabel: {
+        fontSize: FONTS.sizes.md,
+        color: COLORS.white,
+        fontWeight: FONTS.weights.bold,
+        marginBottom: 2,
+    },
+    levelLabelActive: {
+        color: COLORS.primaryDark,
+    },
+    levelDesc: {
+        fontSize: FONTS.sizes.xs,
+        color: 'rgba(255,255,255,0.7)',
+    },
+    levelDescActive: {
+        color: COLORS.textMedium,
     },
     grid: {
         flexDirection: 'row',

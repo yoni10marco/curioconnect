@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { ActivityIndicator, View } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import LoginScreen from '../screens/auth/LoginScreen';
 import InterestSelectionScreen from '../screens/onboarding/InterestSelectionScreen';
@@ -12,6 +13,7 @@ import LeaderboardScreen from '../screens/app/LeaderboardScreen';
 import LearningJourneyScreen from '../screens/app/LearningJourneyScreen';
 import KnowledgeLibraryScreen from '../screens/app/KnowledgeLibraryScreen';
 import AboutScreen from '../screens/app/AboutScreen';
+import FeedbackScreen from '../screens/app/FeedbackScreen';
 
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store/useAuthStore';
@@ -33,6 +35,7 @@ export type AppStackParamList = {
     LearningJourney: undefined;
     KnowledgeLibrary: undefined;
     About: undefined;
+    Feedback: undefined;
 };
 
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
@@ -104,14 +107,22 @@ function AppNavigator() {
                 component={AboutScreen}
                 options={{ headerShown: false, animation: 'slide_from_right' }}
             />
+            <AppStack.Screen
+                name="Feedback"
+                component={FeedbackScreen}
+                options={{ headerShown: false, animation: 'slide_from_right' }}
+            />
         </AppStack.Navigator>
     );
 }
 
 export default function RootNavigator() {
+    const PERSISTENCE_KEY = 'CURIO_CONNECT_NAV_STATE_V1';
     const { session, setSession, fetchProfile, profile } = useAuthStore();
     const [hasInterests, setHasInterests] = useState<boolean | null>(null);
     const [checkingInterests, setCheckingInterests] = useState(false);
+    const [isReady, setIsReady] = useState(false);
+    const [initialState, setInitialState] = useState();
 
     useEffect(() => {
         supabase.auth.getSession().then(({ data: { session } }) => {
@@ -145,7 +156,27 @@ export default function RootNavigator() {
         checkInterests();
     }, [session, profile]);
 
-    if (!useAuthStore.getState().initialized || checkingInterests) {
+    useEffect(() => {
+        const restoreState = async () => {
+            try {
+                const savedStateString = await AsyncStorage.getItem(PERSISTENCE_KEY);
+                const state = savedStateString ? JSON.parse(savedStateString) : undefined;
+                if (state !== undefined) {
+                    setInitialState(state);
+                }
+            } catch (e) {
+                // Ignore err
+            } finally {
+                setIsReady(true);
+            }
+        };
+
+        if (!isReady) {
+            restoreState();
+        }
+    }, [isReady]);
+
+    if (!isReady || !useAuthStore.getState().initialized || checkingInterests) {
         return (
             <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.white }}>
                 <ActivityIndicator size="large" color={COLORS.primary} />
@@ -154,7 +185,14 @@ export default function RootNavigator() {
     }
 
     return (
-        <NavigationContainer>
+        <NavigationContainer
+            initialState={initialState}
+            onStateChange={(state) => {
+                if (state) {
+                    AsyncStorage.setItem(PERSISTENCE_KEY, JSON.stringify(state));
+                }
+            }}
+        >
             {!session
                 ? <AuthNavigator />
                 : hasInterests === false

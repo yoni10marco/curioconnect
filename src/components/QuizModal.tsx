@@ -41,6 +41,11 @@ export default function QuizModal({ visible, questions, isFinalPage, onClose, on
     const [answerState, setAnswerState] = useState<AnswerState>('unanswered');
     const [score, setScore] = useState(0);
     const [finished, setFinished] = useState(false);
+
+    // Store shuffled options and correct answer string for current question
+    const [shuffledOptions, setShuffledOptions] = useState<string[]>([]);
+    const [correctAnswerStr, setCorrectAnswerStr] = useState<string>('');
+
     const shakeAnim = useRef(new Animated.Value(0)).current;
     const { completeLesson } = useLessonStore();
 
@@ -55,10 +60,24 @@ export default function QuizModal({ visible, questions, isFinalPage, onClose, on
         ]).start();
     };
 
+    const question = questions[current];
+
+    // On new question, shuffle options
+    React.useEffect(() => {
+        if (question) {
+            const originalCorrect = question.options[question.answer_idx];
+            setCorrectAnswerStr(originalCorrect);
+            // Copy and shuffle
+            const shuffled = [...question.options].sort(() => Math.random() - 0.5);
+            setShuffledOptions(shuffled);
+        }
+    }, [current, question]);
+
     const handleSelect = (idx: number) => {
         if (answerState !== 'unanswered') return;
         setSelected(idx);
-        const correct = questions[current].answer_idx === idx;
+
+        const correct = shuffledOptions[idx] === correctAnswerStr;
         if (correct) {
             triggerHaptic('success');
             setAnswerState('correct');
@@ -92,18 +111,16 @@ export default function QuizModal({ visible, questions, isFinalPage, onClose, on
         onComplete();
     };
 
-    const question = questions[current];
-
     const getOptionStyle = (idx: number) => {
         if (answerState === 'unanswered') return styles.option;
-        if (idx === questions[current].answer_idx) return [styles.option, styles.optionCorrect];
+        if (shuffledOptions[idx] === correctAnswerStr) return [styles.option, styles.optionCorrect];
         if (idx === selected && answerState === 'wrong') return [styles.option, styles.optionWrong];
         return styles.option;
     };
 
     const getOptionTextStyle = (idx: number) => {
         if (answerState === 'unanswered') return styles.optionText;
-        if (idx === questions[current].answer_idx) return [styles.optionText, styles.optionTextCorrect];
+        if (shuffledOptions[idx] === correctAnswerStr) return [styles.optionText, styles.optionTextCorrect];
         if (idx === selected && answerState === 'wrong') return [styles.optionText, styles.optionTextWrong];
         return styles.optionText;
     };
@@ -174,7 +191,7 @@ export default function QuizModal({ visible, questions, isFinalPage, onClose, on
                                 </View>
 
                                 <View style={styles.options}>
-                                    {question.options.map((opt, idx) => (
+                                    {shuffledOptions.map((opt, idx) => (
                                         <TouchableOpacity
                                             key={idx}
                                             style={getOptionStyle(idx)}
@@ -195,7 +212,7 @@ export default function QuizModal({ visible, questions, isFinalPage, onClose, on
                                 {answerState !== 'unanswered' && (
                                     <View style={[styles.feedback, answerState === 'correct' ? styles.feedbackCorrect : styles.feedbackWrong]}>
                                         <Text style={styles.feedbackText}>
-                                            {answerState === 'correct' ? '✅ Correct! Well done!' : `❌ The correct answer was: ${question.options[question.answer_idx]}`}
+                                            {answerState === 'correct' ? '✅ Correct! Well done!' : `❌ The correct answer was: ${correctAnswerStr}`}
                                         </Text>
                                         <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
                                             <Text style={styles.nextButtonText}>

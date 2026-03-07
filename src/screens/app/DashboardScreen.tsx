@@ -67,7 +67,7 @@ export default function DashboardScreen() {
     };
 
     const handleFeedback = () => {
-        Linking.openURL('mailto:contact@curioconnect.app?subject=CurioConnect%20Feedback');
+        navigation.navigate('Feedback' as never);
     };
 
     const todayCompleted = lesson?.is_completed ?? false;
