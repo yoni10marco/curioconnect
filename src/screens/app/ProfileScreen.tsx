@@ -23,10 +23,15 @@ const ALL_INTERESTS = [
 ];
 
 export default function ProfileScreen() {
-    const { profile, session, signOut } = useAuthStore();
+    const { profile, session, signOut, updateProfile } = useAuthStore();
     const [selected, setSelected] = useState<Set<string>>(new Set());
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+
+    // Editable Profile Fields
+    const [ageInput, setAgeInput] = useState(profile?.age?.toString() ?? '');
+    const [jobInput, setJobInput] = useState(profile?.job_title ?? '');
+
     const navigation = useNavigation();
 
     useEffect(() => {
@@ -82,6 +87,14 @@ export default function ProfileScreen() {
         }));
 
         const { error: insertError } = await supabase.from('user_interests').insert(rows);
+
+        // Update profile specifics
+        const parsedAge = parseInt(ageInput, 10);
+        await updateProfile({
+            age: !isNaN(parsedAge) ? parsedAge : null,
+            job_title: jobInput.trim() || null,
+        });
+
         if (insertError) {
             Alert.alert('Error', 'Failed to save new interests.');
         } else {
@@ -99,6 +112,31 @@ export default function ProfileScreen() {
                 <View style={styles.headerCard}>
                     <Text style={styles.username}>{profile?.username ?? 'Learner'}</Text>
                     <Text style={styles.stats}>⭐ {profile?.total_xp ?? 0} XP   🔥 {profile?.streak_count ?? 0} Day Streak</Text>
+                    {(profile?.job_title || profile?.age) && (
+                        <Text style={styles.bioText}>
+                            {profile?.job_title} {profile?.age ? `(${profile?.age})` : ''}
+                        </Text>
+                    )}
+                </View>
+
+                {/* Edit Personal Details */}
+                <View style={styles.card}>
+                    <Text style={styles.cardTitle}>Personal Details</Text>
+                    <TextInput
+                        style={styles.textInput}
+                        placeholder="Age"
+                        placeholderTextColor={COLORS.textLight}
+                        keyboardType="numeric"
+                        value={ageInput}
+                        onChangeText={setAgeInput}
+                    />
+                    <TextInput
+                        style={styles.textInput}
+                        placeholder="What do you do for a living?"
+                        placeholderTextColor={COLORS.textLight}
+                        value={jobInput}
+                        onChangeText={setJobInput}
+                    />
                 </View>
 
                 {/* AI Prompt (Coming Soon) */}
@@ -185,6 +223,7 @@ const styles = StyleSheet.create({
     },
     username: { fontSize: FONTS.sizes.xl, fontWeight: FONTS.weights.bold, color: COLORS.textDark, marginBottom: 4 },
     stats: { fontSize: FONTS.sizes.md, color: COLORS.textMedium, fontWeight: FONTS.weights.medium },
+    bioText: { fontSize: FONTS.sizes.sm, color: COLORS.primary, fontWeight: FONTS.weights.bold, marginTop: 4 },
     card: {
         backgroundColor: COLORS.white,
         borderRadius: RADIUS.xl,
@@ -204,6 +243,16 @@ const styles = StyleSheet.create({
         padding: SPACING.md,
         fontSize: FONTS.sizes.md,
         color: COLORS.textMedium,
+    },
+    textInput: {
+        backgroundColor: COLORS.background,
+        borderWidth: 1,
+        borderColor: COLORS.border,
+        borderRadius: RADIUS.md,
+        padding: SPACING.md,
+        fontSize: FONTS.sizes.md,
+        color: COLORS.textDark,
+        marginBottom: SPACING.md,
     },
     grid: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm },
     chip: {

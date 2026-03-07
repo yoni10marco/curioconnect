@@ -7,6 +7,7 @@ import {
     ScrollView,
     Alert,
     ActivityIndicator,
+    TextInput,
 } from 'react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/theme';
 import { supabase } from '../../lib/supabase';
@@ -22,7 +23,9 @@ const ALL_INTERESTS = [
 export default function InterestSelectionScreen() {
     const [selected, setSelected] = useState<Set<string>>(new Set());
     const [saving, setSaving] = useState(false);
-    const { session, fetchProfile } = useAuthStore();
+    const [ageInput, setAgeInput] = useState('');
+    const [jobInput, setJobInput] = useState('');
+    const { session, fetchProfile, updateProfile } = useAuthStore();
 
     const toggle = (interest: string) => {
         setSelected((prev) => {
@@ -53,6 +56,13 @@ export default function InterestSelectionScreen() {
             return;
         }
 
+        // Save age and job if provided
+        const parsedAge = parseInt(ageInput, 10);
+        await updateProfile({
+            ...(ageInput && !isNaN(parsedAge) && { age: parsedAge }),
+            ...(jobInput.trim() && { job_title: jobInput.trim() }),
+        });
+
         await fetchProfile(session.user.id);
         setSaving(false);
         // Navigation happens automatically via root navigator checking profile interests
@@ -65,9 +75,28 @@ export default function InterestSelectionScreen() {
                 <Text style={styles.title}>What are you into?</Text>
                 <Text style={styles.subtitle}>
                     We'll connect your passions to fascinating academic topics daily.
-                    {'\n'}
-                    <Text style={styles.minText}>Pick at least 2</Text>
                 </Text>
+
+                <View style={styles.inputCard}>
+                    <Text style={styles.sectionHeading}>Tell us about yourself (Optional)</Text>
+                    <TextInput
+                        style={styles.textInput}
+                        placeholder="Age (e.g., 25)"
+                        placeholderTextColor="rgba(255,255,255,0.6)"
+                        keyboardType="numeric"
+                        value={ageInput}
+                        onChangeText={setAgeInput}
+                    />
+                    <TextInput
+                        style={styles.textInput}
+                        placeholder="What do you do? (e.g., Student, Engineer)"
+                        placeholderTextColor="rgba(255,255,255,0.6)"
+                        value={jobInput}
+                        onChangeText={setJobInput}
+                    />
+                </View>
+
+                <Text style={styles.minText}>Pick at least 2 interests</Text>
             </View>
 
             <ScrollView contentContainerStyle={styles.grid} showsVerticalScrollIndicator={false}>
@@ -130,12 +159,35 @@ const styles = StyleSheet.create({
         fontSize: FONTS.sizes.md,
         color: 'rgba(255,255,255,0.85)',
         marginTop: SPACING.sm,
+        marginBottom: SPACING.lg,
         textAlign: 'center',
         lineHeight: 22,
+    },
+    inputCard: {
+        width: '100%',
+        backgroundColor: 'rgba(255,255,255,0.1)',
+        borderRadius: RADIUS.lg,
+        padding: SPACING.md,
+        marginBottom: SPACING.xl,
+    },
+    sectionHeading: {
+        color: COLORS.white,
+        fontSize: FONTS.sizes.sm,
+        fontWeight: FONTS.weights.bold,
+        marginBottom: SPACING.sm,
+    },
+    textInput: {
+        backgroundColor: 'rgba(255,255,255,0.15)',
+        borderRadius: RADIUS.md,
+        padding: SPACING.md,
+        color: COLORS.white,
+        fontSize: FONTS.sizes.md,
+        marginBottom: SPACING.sm,
     },
     minText: {
         fontWeight: FONTS.weights.bold,
         color: COLORS.accent,
+        marginBottom: -SPACING.md,
     },
     grid: {
         flexDirection: 'row',

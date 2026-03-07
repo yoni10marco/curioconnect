@@ -6,6 +6,8 @@ export type Profile = {
     last_lesson_date: string | null;
     difficulty_level: string;
     created_at: string;
+    age?: number | null;
+    job_title?: string | null;
 };
 
 export type UserInterest = {
