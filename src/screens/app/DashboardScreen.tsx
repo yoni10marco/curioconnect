@@ -118,7 +118,7 @@ export default function DashboardScreen() {
             {/* Main Content */}
             <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
                 {/* Daily Mission Card */}
-                <TouchableOpacity onPress={() => navigation.navigate('LearningJourney')} activeOpacity={0.9} style={styles.missionCard}>
+                <View style={styles.missionCard}>
                     <View style={styles.missionIconRow}>
                         <Text style={styles.missionIcon}>🎯</Text>
                         <View style={styles.missionBadge}>
@@ -144,7 +144,7 @@ export default function DashboardScreen() {
                             {loading ? '⏳ Preparing...' : todayCompleted ? '✅ Completed!' : '🚀 Start Lesson'}
                         </Text>
                     </TouchableOpacity>
-                </TouchableOpacity>
+                </View>
 
                 {/* Info Cards */}
                 <View style={styles.infoRow}>

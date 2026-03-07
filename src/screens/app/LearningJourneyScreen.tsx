@@ -22,9 +22,10 @@ export default function LearningJourneyScreen() {
 
                 <TouchableOpacity
                     style={styles.backButton}
-                    onPress={() => navigation.goBack()}
+                    onPress={() => navigation.navigate('Dashboard' as never)}
                     activeOpacity={0.8}
                 >
+                    <Text style={styles.backButtonText}>Back to Dashboard</Text>
                 </TouchableOpacity>
             </View>
             <BottomNav currentRoute="LearningJourney" />

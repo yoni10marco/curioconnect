@@ -15,7 +15,7 @@ const TABS: { name: RouteName; label: string; emoji: string }[] = [
     { name: 'Dashboard', label: 'Home', emoji: '🏠' },
     { name: 'LearningJourney', label: 'Journey', emoji: '🗺️' },
     { name: 'KnowledgeLibrary', label: 'Library', emoji: '📚' },
-    { name: 'Leaderboard', label: 'Rank', emoji: '🏆' },
+    { name: 'Leaderboard', label: 'Leaderboard', emoji: '🏆' },
     { name: 'Profile', label: 'Profile', emoji: '👤' },
 ];
 
