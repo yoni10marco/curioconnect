@@ -94,23 +94,23 @@ export default function DashboardScreen() {
                 {/* Stats Row */}
                 <View style={styles.statsRow}>
                     {/* Streak */}
-                    <View style={styles.statCard}>
+                    <TouchableOpacity onPress={() => navigation.navigate('Leaderboard')} style={styles.statCard}>
                         <Animated.Text style={[styles.statEmoji, { transform: [{ scale: pulseAnim }], opacity: fireOpacity }]}>
                             🔥
                         </Animated.Text>
                         <Text style={styles.statValue}>{profile?.streak_count ?? 0}</Text>
                         <Text style={styles.statLabel}>Day Streak</Text>
-                    </View>
+                    </TouchableOpacity>
 
                     {/* Divider */}
                     <View style={styles.statDivider} />
 
                     {/* XP */}
-                    <View style={styles.statCard}>
+                    <TouchableOpacity onPress={() => navigation.navigate('Leaderboard')} style={styles.statCard}>
                         <Text style={styles.statEmoji}>⭐</Text>
                         <Text style={styles.statValue}>{profile?.total_xp ?? 0}</Text>
                         <Text style={styles.statLabel}>Total XP</Text>
-                    </View>
+                    </TouchableOpacity>
                 </View>
             </LinearGradient>
 

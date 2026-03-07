@@ -8,6 +8,7 @@ import InterestSelectionScreen from '../screens/onboarding/InterestSelectionScre
 import DashboardScreen from '../screens/app/DashboardScreen';
 import LessonReaderScreen from '../screens/app/LessonReaderScreen';
 import ProfileScreen from '../screens/app/ProfileScreen';
+import LeaderboardScreen from '../screens/app/LeaderboardScreen';
 
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store/useAuthStore';
@@ -26,6 +27,7 @@ export type AppStackParamList = {
     Dashboard: undefined;
     LessonReader: undefined;
     Profile: undefined;
+    Leaderboard: undefined;
 };
 
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
@@ -76,6 +78,13 @@ function AppNavigator() {
                 options={{
                     title: 'Profile',
                     headerBackTitle: 'Back',
+                }}
+            />
+            <AppStack.Screen
+                name="Leaderboard"
+                component={LeaderboardScreen}
+                options={{
+                    headerShown: false,
                 }}
             />
         </AppStack.Navigator>
