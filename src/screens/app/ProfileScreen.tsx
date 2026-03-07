@@ -34,6 +34,14 @@ export default function ProfileScreen() {
 
     const [difficulty, setDifficulty] = useState(profile?.difficulty_level ?? 'beginner');
 
+    useEffect(() => {
+        if (profile) {
+            setDifficulty(profile.difficulty_level ?? 'beginner');
+            setAgeInput(profile.age?.toString() ?? '');
+            setJobInput(profile.job_title ?? '');
+        }
+    }, [profile]);
+
     // AI Discovery Fields
     const [aiPrompt, setAiPrompt] = useState('');
     const [aiLoading, setAiLoading] = useState(false);
@@ -117,6 +125,7 @@ export default function ProfileScreen() {
         // Update profile specifics
         const parsedAge = parseInt(ageInput, 10);
         await updateProfile({
+            difficulty_level: difficulty,
             age: !isNaN(parsedAge) ? parsedAge : null,
             job_title: jobInput.trim() || null,
         });
