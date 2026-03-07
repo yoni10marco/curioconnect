@@ -7,6 +7,7 @@ import {
     Animated,
     ScrollView,
     Alert,
+    Linking,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
@@ -65,6 +66,10 @@ export default function DashboardScreen() {
         }
     };
 
+    const handleFeedback = () => {
+        Linking.openURL('mailto:contact@curioconnect.app?subject=CurioConnect%20Feedback');
+    };
+
     const todayCompleted = lesson?.is_completed ?? false;
 
     return (
@@ -87,9 +92,14 @@ export default function DashboardScreen() {
                             {todayCompleted ? "I studied today! 🎯" : "Ready for today's mission?"}
                         </Text>
                     </View>
-                    <TouchableOpacity onPress={() => navigation.navigate('Profile')} style={styles.profileBtn}>
-                        <Text style={styles.profileBtnText}>👤</Text>
-                    </TouchableOpacity>
+                    <View style={styles.headerRightActions}>
+                        <TouchableOpacity onPress={() => navigation.navigate('About')} style={styles.actionBtn}>
+                            <Text style={styles.actionBtnText}>ℹ️</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={() => navigation.navigate('Profile')} style={styles.actionBtn}>
+                            <Text style={styles.actionBtnText}>👤</Text>
+                        </TouchableOpacity>
+                    </View>
                 </View>
 
                 {/* Stats Row */}
@@ -165,6 +175,16 @@ export default function DashboardScreen() {
                     </View>
                 </View>
 
+                {/* Send Feedback Button */}
+                <TouchableOpacity style={styles.feedbackCard} onPress={handleFeedback} activeOpacity={0.8}>
+                    <Text style={styles.feedbackEmoji}>💬</Text>
+                    <View style={styles.feedbackTextCol}>
+                        <Text style={styles.feedbackTitle}>Send Feedback</Text>
+                        <Text style={styles.feedbackDesc}>Help us improve CurioConnect</Text>
+                    </View>
+                    <Text style={styles.feedbackArrow}>→</Text>
+                </TouchableOpacity>
+
                 {/* Motivational Footer */}
                 <Text style={styles.motivational}>
                     {(profile?.streak_count ?? 0) > 1
@@ -217,7 +237,12 @@ const styles = StyleSheet.create({
         color: 'rgba(255,255,255,0.8)',
         marginTop: 2,
     },
-    profileBtn: {
+    headerRightActions: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: SPACING.md,
+    },
+    actionBtn: {
         backgroundColor: 'rgba(255,255,255,0.2)',
         width: 44,
         height: 44,
@@ -225,7 +250,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
     },
-    profileBtnText: {
+    actionBtnText: {
         fontSize: FONTS.sizes.lg,
     },
     statsRow: {
@@ -346,6 +371,40 @@ const styles = StyleSheet.create({
         color: COLORS.textMedium,
         textAlign: 'center',
         marginTop: 2,
+    },
+    feedbackCard: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: COLORS.white,
+        borderRadius: RADIUS.lg,
+        padding: SPACING.lg,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 6,
+        elevation: 2,
+    },
+    feedbackEmoji: {
+        fontSize: 28,
+        marginRight: SPACING.md,
+    },
+    feedbackTextCol: {
+        flex: 1,
+    },
+    feedbackTitle: {
+        fontSize: FONTS.sizes.lg,
+        fontWeight: FONTS.weights.bold,
+        color: COLORS.textDark,
+    },
+    feedbackDesc: {
+        fontSize: FONTS.sizes.sm,
+        color: COLORS.textMedium,
+        marginTop: 2,
+    },
+    feedbackArrow: {
+        fontSize: 20,
+        color: COLORS.textLight,
+        fontWeight: 'bold',
     },
     motivational: {
         textAlign: 'center',
