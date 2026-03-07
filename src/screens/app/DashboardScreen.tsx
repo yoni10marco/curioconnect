@@ -21,7 +21,7 @@ type Nav = NativeStackNavigationProp<AppStackParamList, 'Dashboard'>;
 
 export default function DashboardScreen() {
     const navigation = useNavigation<Nav>();
-    const { profile, signOut } = useAuthStore();
+    const { profile } = useAuthStore();
     const { fetchOrGenerateLesson, loading, lesson, resetLesson } = useLessonStore();
 
 
@@ -86,8 +86,8 @@ export default function DashboardScreen() {
                             {todayCompleted ? "I studied today! 🎯" : "Ready for today's mission?"}
                         </Text>
                     </View>
-                    <TouchableOpacity onPress={signOut} style={styles.signOutBtn}>
-                        <Text style={styles.signOutText}>Log Out</Text>
+                    <TouchableOpacity onPress={() => navigation.navigate('Profile')} style={styles.profileBtn}>
+                        <Text style={styles.profileBtnText}>👤</Text>
                     </TouchableOpacity>
                 </View>
 
@@ -214,18 +214,16 @@ const styles = StyleSheet.create({
         color: 'rgba(255,255,255,0.8)',
         marginTop: 2,
     },
-    signOutBtn: {
-        backgroundColor: '#FFEBEE', // light red
-        paddingHorizontal: SPACING.md,
-        paddingVertical: 6,
-        borderRadius: RADIUS.full,
+    profileBtn: {
+        backgroundColor: 'rgba(255,255,255,0.2)',
+        width: 44,
+        height: 44,
+        borderRadius: 22,
         alignItems: 'center',
         justifyContent: 'center',
     },
-    signOutText: {
-        fontSize: FONTS.sizes.sm,
-        color: '#D32F2F', // dark red
-        fontWeight: FONTS.weights.bold
+    profileBtnText: {
+        fontSize: FONTS.sizes.lg,
     },
     statsRow: {
         flexDirection: 'row',
