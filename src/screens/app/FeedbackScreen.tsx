@@ -7,6 +7,7 @@ export default function FeedbackScreen() {
     const navigation = useNavigation();
     const [feedback, setFeedback] = useState('');
     const [sending, setSending] = useState(false);
+    const [isSent, setIsSent] = useState(false);
 
     const handleSend = () => {
         if (!feedback.trim()) {
@@ -19,14 +20,31 @@ export default function FeedbackScreen() {
         // Mock send delay
         setTimeout(() => {
             setSending(false);
-            Alert.alert('Success', 'Thank you for your feedback! It has been received.', [
-                {
-                    text: 'OK',
-                    onPress: () => navigation.goBack(),
-                }
-            ]);
+            setIsSent(true);
         }, 1200);
     };
+
+    if (isSent) {
+        return (
+            <View style={styles.container}>
+                <View style={styles.header}>
+                    <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+                        <Text style={styles.backButtonText}>←</Text>
+                    </TouchableOpacity>
+                    <Text style={styles.headerTitle}>Feedback Sent</Text>
+                    <View style={{ width: 44 }} /> {/* Spacer */}
+                </View>
+                <View style={styles.successContainer}>
+                    <Text style={styles.successEmoji}>💖</Text>
+                    <Text style={styles.successTitle}>Thank You!</Text>
+                    <Text style={styles.successDesc}>Your feedback has been successfully sent. We really appreciate your input in helping us improve CurioConnect.</Text>
+                    <TouchableOpacity style={styles.successButton} onPress={() => navigation.goBack()}>
+                        <Text style={styles.successButtonText}>Back to Dashboard</Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
+        );
+    }
 
     return (
         <KeyboardAvoidingView
@@ -172,6 +190,42 @@ const styles = StyleSheet.create({
     sendButtonText: {
         color: COLORS.white,
         fontSize: FONTS.sizes.lg,
+        fontWeight: FONTS.weights.bold,
+    },
+    successContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: SPACING.xl,
+    },
+    successEmoji: { fontSize: 72, marginBottom: SPACING.md },
+    successTitle: {
+        fontSize: FONTS.sizes.xxl,
+        fontWeight: FONTS.weights.heavy,
+        color: COLORS.textDark,
+        marginBottom: SPACING.sm,
+    },
+    successDesc: {
+        fontSize: FONTS.sizes.md,
+        color: COLORS.textMedium,
+        textAlign: 'center',
+        lineHeight: 24,
+        marginBottom: SPACING.xxl,
+    },
+    successButton: {
+        backgroundColor: COLORS.primary,
+        borderRadius: RADIUS.lg,
+        paddingHorizontal: SPACING.xxl,
+        paddingVertical: SPACING.md,
+        shadowColor: COLORS.primary,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 6,
+    },
+    successButtonText: {
+        color: COLORS.white,
+        fontSize: FONTS.sizes.md,
         fontWeight: FONTS.weights.bold,
     },
 });

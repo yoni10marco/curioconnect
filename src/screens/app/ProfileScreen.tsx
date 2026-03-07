@@ -32,6 +32,8 @@ export default function ProfileScreen() {
     const [ageInput, setAgeInput] = useState(profile?.age?.toString() ?? '');
     const [jobInput, setJobInput] = useState(profile?.job_title ?? '');
 
+    const [difficulty, setDifficulty] = useState(profile?.difficulty_level ?? 'beginner');
+
     // AI Discovery Fields
     const [aiPrompt, setAiPrompt] = useState('');
     const [aiLoading, setAiLoading] = useState(false);
