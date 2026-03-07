@@ -147,11 +147,11 @@ export default function DashboardScreen() {
 
                 {/* Info Cards */}
                 <View style={styles.infoRow}>
-                    <View style={styles.infoCard}>
+                    <TouchableOpacity onPress={() => navigation.navigate('KnowledgeLibrary')} activeOpacity={0.8} style={styles.infoCard}>
                         <Text style={styles.infoEmoji}>📖</Text>
-                        <Text style={styles.infoTitle}>~5 min</Text>
-                        <Text style={styles.infoLabel}>Per lesson</Text>
-                    </View>
+                        <Text style={styles.infoTitle}>Library</Text>
+                        <Text style={styles.infoLabel}>View learned</Text>
+                    </TouchableOpacity>
                     <View style={styles.infoCard}>
                         <Text style={styles.infoEmoji}>🎓</Text>
                         <Text style={styles.infoTitle}>+50 XP</Text>
