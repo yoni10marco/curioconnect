@@ -13,6 +13,7 @@ import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/theme';
 import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useNavigation } from '@react-navigation/native';
+import BottomNav from '../../components/BottomNav';
 
 const ALL_INTERESTS = [
     '🎮 Gaming', '⚽ Football', '🎸 Music', '🎨 Art', '🏋️ Fitness',
@@ -167,6 +168,7 @@ export default function ProfileScreen() {
                 </TouchableOpacity>
 
             </ScrollView>
+            <BottomNav currentRoute="Profile" />
         </View>
     );
 }

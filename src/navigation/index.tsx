@@ -1,9 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { ActivityIndicator, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 
 import LoginScreen from '../screens/auth/LoginScreen';
 import InterestSelectionScreen from '../screens/onboarding/InterestSelectionScreen';
@@ -26,23 +24,17 @@ export type OnboardingStackParamList = {
     InterestSelection: undefined;
 };
 
-// Tabs
-export type MainTabParamList = {
+export type AppStackParamList = {
     Dashboard: undefined;
+    LessonReader: undefined;
+    Profile: undefined;
+    Leaderboard: undefined;
     LearningJourney: undefined;
     KnowledgeLibrary: undefined;
-    Leaderboard: undefined;
-    Profile: undefined;
-};
-
-export type AppStackParamList = {
-    MainTabs: undefined;
-    LessonReader: undefined;
 };
 
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const OnboardingStack = createNativeStackNavigator<OnboardingStackParamList>();
-const MainTab = createBottomTabNavigator<MainTabParamList>();
 const AppStack = createNativeStackNavigator<AppStackParamList>();
 
 function AuthNavigator() {
@@ -61,40 +53,6 @@ function OnboardingNavigator() {
     );
 }
 
-function MainTabNavigator() {
-    return (
-        <MainTab.Navigator
-            screenOptions={({ route }) => ({
-                headerShown: false,
-                tabBarActiveTintColor: COLORS.primary,
-                tabBarInactiveTintColor: COLORS.textMedium,
-                tabBarStyle: {
-                    borderTopWidth: 1,
-                    borderTopColor: COLORS.border,
-                    backgroundColor: COLORS.white,
-                    height: 60,
-                    paddingBottom: 8,
-                },
-                tabBarIcon: ({ color, size }) => {
-                    let iconName = 'home';
-                    if (route.name === 'Dashboard') iconName = 'home';
-                    else if (route.name === 'LearningJourney') iconName = 'analytics';
-                    else if (route.name === 'KnowledgeLibrary') iconName = 'library';
-                    else if (route.name === 'Leaderboard') iconName = 'trophy';
-                    else if (route.name === 'Profile') iconName = 'person';
-                    return <Ionicons name={iconName as any} size={size} color={color} />;
-                },
-            })}
-        >
-            <MainTab.Screen name="Dashboard" component={DashboardScreen} options={{ title: 'Home' }} />
-            <MainTab.Screen name="LearningJourney" component={LearningJourneyScreen} options={{ title: 'Journey' }} />
-            <MainTab.Screen name="KnowledgeLibrary" component={KnowledgeLibraryScreen} options={{ title: 'Library' }} />
-            <MainTab.Screen name="Leaderboard" component={LeaderboardScreen} options={{ title: 'Ranking' }} />
-            <MainTab.Screen name="Profile" component={ProfileScreen} options={{ title: 'Profile' }} />
-        </MainTab.Navigator>
-    );
-}
-
 function AppNavigator() {
     return (
         <AppStack.Navigator
@@ -102,11 +60,32 @@ function AppNavigator() {
                 headerStyle: { backgroundColor: COLORS.white },
                 headerTintColor: COLORS.primary,
                 headerTitleStyle: { fontWeight: '700', color: COLORS.textDark },
+                animation: 'none', // Tab-like instant switching
             }}
         >
             <AppStack.Screen
-                name="MainTabs"
-                component={MainTabNavigator}
+                name="Dashboard"
+                component={DashboardScreen}
+                options={{ headerShown: false }}
+            />
+            <AppStack.Screen
+                name="LearningJourney"
+                component={LearningJourneyScreen}
+                options={{ headerShown: false }}
+            />
+            <AppStack.Screen
+                name="KnowledgeLibrary"
+                component={KnowledgeLibraryScreen}
+                options={{ headerShown: false }}
+            />
+            <AppStack.Screen
+                name="Leaderboard"
+                component={LeaderboardScreen}
+                options={{ headerShown: false }}
+            />
+            <AppStack.Screen
+                name="Profile"
+                component={ProfileScreen}
                 options={{ headerShown: false }}
             />
             <AppStack.Screen
@@ -115,6 +94,7 @@ function AppNavigator() {
                 options={{
                     title: 'Today\'s Lesson',
                     headerBackTitle: 'Dashboard',
+                    animation: 'default', // Restore normal slide for lessons
                 }}
             />
         </AppStack.Navigator>

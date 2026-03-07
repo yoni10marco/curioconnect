@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/theme';
+import BottomNav from '../../components/BottomNav';
 
 export default function LeaderboardScreen() {
     const navigation = useNavigation();
@@ -24,9 +25,9 @@ export default function LeaderboardScreen() {
                     onPress={() => navigation.goBack()}
                     activeOpacity={0.8}
                 >
-                    <Text style={styles.backButtonText}>Back to Dashboard</Text>
                 </TouchableOpacity>
             </View>
+            <BottomNav currentRoute="Leaderboard" />
         </View>
     );
 }
@@ -35,13 +36,14 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: COLORS.background,
-        justifyContent: 'center',
-        padding: SPACING.lg,
     },
     content: {
+        flex: 1,
         backgroundColor: COLORS.white,
-        borderRadius: RADIUS.xl,
+        borderBottomLeftRadius: RADIUS.xl,
+        borderBottomRightRadius: RADIUS.xl,
         padding: SPACING.xl,
+        justifyContent: 'center',
         alignItems: 'center',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },

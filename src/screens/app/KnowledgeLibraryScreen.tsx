@@ -5,6 +5,7 @@ import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../store/useAuthStore';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/theme';
 import { DailyLesson } from '../../lib/types';
+import BottomNav from '../../components/BottomNav';
 
 export default function KnowledgeLibraryScreen() {
     const navigation = useNavigation();
@@ -72,6 +73,7 @@ export default function KnowledgeLibraryScreen() {
                     ))}
                 </ScrollView>
             )}
+            <BottomNav currentRoute="KnowledgeLibrary" />
         </View>
     );
 }

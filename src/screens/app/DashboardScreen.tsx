@@ -16,6 +16,7 @@ import { useAuthStore } from '../../store/useAuthStore';
 import { useLessonStore } from '../../store/useLessonStore';
 import { AppStackParamList } from '../../navigation';
 import { APP_VERSION } from '../../lib/version';
+import BottomNav from '../../components/BottomNav';
 
 type Nav = NativeStackNavigationProp<AppStackParamList, 'Dashboard'>;
 
@@ -171,6 +172,8 @@ export default function DashboardScreen() {
                         : "Every expert was once a beginner. Start today!"}
                 </Text>
             </ScrollView>
+
+            <BottomNav currentRoute="Dashboard" />
         </View>
     );
 }
