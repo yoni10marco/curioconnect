@@ -138,11 +138,6 @@ export default function ProfileScreen() {
                 <View style={styles.headerCard}>
                     <Text style={styles.username}>{profile?.username ?? 'Learner'}</Text>
                     <Text style={styles.stats}>⭐ {profile?.total_xp ?? 0} XP   🔥 {profile?.streak_count ?? 0} Day Streak</Text>
-                    {(profile?.job_title || profile?.age) && (
-                        <Text style={styles.bioText}>
-                            {profile?.job_title} {profile?.age ? `(${profile?.age})` : ''}
-                        </Text>
-                    )}
                 </View>
 
                 {/* Edit Personal Details */}
@@ -163,13 +158,33 @@ export default function ProfileScreen() {
                         value={jobInput}
                         onChangeText={setJobInput}
                     />
+
+                    <Text style={[styles.cardTitle, { marginTop: SPACING.md, marginBottom: SPACING.sm }]}>📚 Lesson Difficulty</Text>
+                    <View style={styles.levelContainer}>
+                        {[
+                            { id: 'child', label: '🧒 Child', desc: 'Simple' },
+                            { id: 'beginner', label: '🎓 High School', desc: 'Beginner' },
+                            { id: 'intermediate', label: '🏛️ College', desc: 'Intermediate' },
+                            { id: 'advanced', label: '🧠 Expert', desc: 'Advanced' },
+                        ].map(l => (
+                            <TouchableOpacity
+                                key={l.id}
+                                style={[styles.levelBtn, difficulty === l.id && styles.levelBtnActive]}
+                                onPress={() => setDifficulty(l.id)}
+                                activeOpacity={0.8}
+                            >
+                                <Text style={[styles.levelLabel, difficulty === l.id && styles.levelLabelActive]}>{l.label}</Text>
+                                <Text style={[styles.levelDesc, difficulty === l.id && styles.levelDescActive]}>{l.desc}</Text>
+                            </TouchableOpacity>
+                        ))}
+                    </View>
                 </View>
 
                 {/* AI Prompt */}
                 <View style={styles.card}>
                     <Text style={styles.cardTitle}>✨ AI Discover Interests</Text>
                     <Text style={styles.cardDesc}>
-                        Prompt our AI to discover new niche interests tailored exactly to your vibe.
+                        Prompt our AI to read your sentence and map it to core interests that we can teach you about!
                     </Text>
                     <View style={styles.aiInputRow}>
                         <TextInput
@@ -188,7 +203,7 @@ export default function ProfileScreen() {
                             {aiLoading ? (
                                 <ActivityIndicator color={COLORS.white} size="small" />
                             ) : (
-                                <Text style={styles.aiBtnText}>Ask</Text>
+                                <Text style={styles.aiBtnText}>Discover</Text>
                             )}
                         </TouchableOpacity>
                     </View>
@@ -324,4 +339,39 @@ const styles = StyleSheet.create({
     saveButtonText: { color: COLORS.white, fontSize: FONTS.sizes.lg, fontWeight: FONTS.weights.bold },
     logoutButton: { alignItems: 'center', padding: SPACING.md, marginTop: SPACING.sm },
     logoutText: { color: '#D32F2F', fontSize: FONTS.sizes.md, fontWeight: FONTS.weights.bold },
+    levelContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: SPACING.sm,
+    },
+    levelBtn: {
+        flex: 1,
+        minWidth: '45%',
+        backgroundColor: COLORS.background,
+        borderRadius: RADIUS.md,
+        padding: SPACING.md,
+        alignItems: 'center',
+        borderWidth: 2,
+        borderColor: 'transparent',
+    },
+    levelBtnActive: {
+        backgroundColor: COLORS.white,
+        borderColor: COLORS.accent,
+    },
+    levelLabel: {
+        fontSize: FONTS.sizes.md,
+        color: COLORS.textDark,
+        fontWeight: FONTS.weights.bold,
+        marginBottom: 2,
+    },
+    levelLabelActive: {
+        color: COLORS.primaryDark,
+    },
+    levelDesc: {
+        fontSize: FONTS.sizes.xs,
+        color: COLORS.textLight,
+    },
+    levelDescActive: {
+        color: COLORS.textMedium,
+    },
 });

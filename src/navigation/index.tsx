@@ -152,7 +152,15 @@ export default function RootNavigator() {
         checkInterests();
     }, [session, profile]);
 
-    if (!useAuthStore.getState().initialized || checkingInterests) {
+    if (!useAuthStore.getState().initialized) {
+        return (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.white }}>
+                <ActivityIndicator size="large" color={COLORS.primary} />
+            </View>
+        );
+    }
+
+    if (session && hasInterests === null) {
         return (
             <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.white }}>
                 <ActivityIndicator size="large" color={COLORS.primary} />
