@@ -16,8 +16,7 @@ export default function LearningJourneyScreen() {
                     <Text style={styles.comingSoonText}>Coming Soon</Text>
                 </View>
                 <Text style={styles.description}>
-                    Visualize your progress over time.
-                    See how your diverse interests connect to form your unique web of knowledge!
+                    In the future, you will be able to write down any topic you want, and CurioConnect will generate a complete, personalized learning program for you!
                 </Text>
 
                 <TouchableOpacity

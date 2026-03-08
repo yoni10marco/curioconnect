@@ -12,6 +12,7 @@ import {
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/theme';
 import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../store/useAuthStore';
+import { useLessonStore } from '../../store/useLessonStore';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import BottomNav from '../../components/BottomNav';
 
@@ -24,6 +25,7 @@ const ALL_INTERESTS = [
 
 export default function ProfileScreen() {
     const { profile, session, signOut, updateProfile } = useAuthStore();
+    const { resetLesson } = useLessonStore();
     const [selected, setSelected] = useState<Set<string>>(new Set());
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -269,7 +271,7 @@ export default function ProfileScreen() {
                 </TouchableOpacity>
 
                 {/* Logout */}
-                <TouchableOpacity onPress={signOut} style={styles.logoutButton}>
+                <TouchableOpacity onPress={() => { signOut(); resetLesson(); }} style={styles.logoutButton}>
                     <Text style={styles.logoutText}>Log Out</Text>
                 </TouchableOpacity>
 
