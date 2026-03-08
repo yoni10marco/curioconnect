@@ -9,8 +9,8 @@ import {
     NativeSyntheticEvent,
     NativeScrollEvent,
 } from 'react-native';
-import MarkdownDisplay from 'react-native-markdown-display';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import MarkdownDisplay from 'react-native-markdown-display';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/theme';
 import { useLessonStore } from '../../store/useLessonStore';
@@ -26,26 +26,6 @@ export default function LessonReaderScreen() {
     const [quizVisible, setQuizVisible] = useState(false);
     const [currentPageIndex, setCurrentPageIndex] = useState(0);
     const progressAnim = useRef(new Animated.Value(0)).current;
-    const scrollViewRef = useRef<ScrollView>(null);
-
-    // Scroll to top automatically when page index changes (for long reading pages)
-    React.useEffect(() => {
-        setTimeout(() => {
-            scrollViewRef.current?.scrollTo({ y: 0, animated: false });
-            setProgress(0);
-            progressAnim.setValue(0);
-        }, 50);
-    }, [currentPageIndex]);
-
-    useFocusEffect(
-        React.useCallback(() => {
-            setTimeout(() => {
-                scrollViewRef.current?.scrollTo({ y: 0, animated: false });
-                setProgress(0);
-                progressAnim.setValue(0);
-            }, 50);
-        }, [])
-    );
 
     // quiz_data may arrive from Supabase as a JSON string on web — parse it
     const lessonPages = React.useMemo(() => {
@@ -109,7 +89,7 @@ export default function LessonReaderScreen() {
 
             {/* Content */}
             <ScrollView
-                ref={scrollViewRef}
+                key={`page-${currentPageIndex}`}
                 style={styles.scroll}
                 contentContainerStyle={styles.contentPad}
                 onScroll={handleScroll}
@@ -170,8 +150,6 @@ export default function LessonReaderScreen() {
                     } else {
                         // Go to next page
                         setCurrentPageIndex(prev => prev + 1);
-                        // Reset scroll & progress instantly
-                        scrollViewRef.current?.scrollTo({ y: 0, animated: false });
                         setProgress(0);
                         progressAnim.setValue(0);
                     }
