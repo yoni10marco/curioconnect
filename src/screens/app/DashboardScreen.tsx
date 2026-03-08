@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
     View,
     Text,
@@ -18,13 +18,16 @@ import { useLessonStore } from '../../store/useLessonStore';
 import { AppStackParamList } from '../../navigation';
 import { APP_VERSION } from '../../lib/version';
 import BottomNav from '../../components/BottomNav';
+import { supabase } from '../../lib/supabase';
 
 type Nav = NativeStackNavigationProp<AppStackParamList, 'Dashboard'>;
 
 export default function DashboardScreen() {
     const navigation = useNavigation<Nav>();
-    const { profile, checkAndResetStreak } = useAuthStore();
+    const { profile, session, checkAndResetStreak } = useAuthStore();
     const { fetchOrGenerateLesson, loading, lesson, resetLesson, checkTodayLesson } = useLessonStore();
+
+    const [unreadNews, setUnreadNews] = useState(0);
 
     const scrollRef = useRef<ScrollView>(null);
 
@@ -33,7 +36,15 @@ export default function DashboardScreen() {
             scrollRef.current?.scrollTo({ y: 0, animated: false });
             checkAndResetStreak();
             checkTodayLesson();
-        }, [])
+
+            const fetchUnreadNews = async () => {
+                if (!session) return;
+                const { count: totalNews } = await supabase.from('news_messages').select('*', { count: 'exact', head: true });
+                const { count: readNews } = await supabase.from('user_news_reads').select('*', { count: 'exact', head: true }).eq('user_id', session.user.id);
+                setUnreadNews(Math.max(0, (totalNews || 0) - (readNews || 0)));
+            };
+            fetchUnreadNews();
+        }, [session])
     );
 
     // Streak fire pulse animation
@@ -109,6 +120,10 @@ export default function DashboardScreen() {
                             </Text>
                         </View>
                         <View style={styles.headerRightActions}>
+                            <TouchableOpacity onPress={() => navigation.navigate('News')} style={styles.actionBtn}>
+                                <Text style={styles.actionBtnText}>🔔</Text>
+                                {unreadNews > 0 && <View style={styles.badge} />}
+                            </TouchableOpacity>
                             <TouchableOpacity onPress={() => navigation.navigate('About')} style={styles.actionBtn}>
                                 <Text style={styles.actionBtnText}>ℹ️</Text>
                             </TouchableOpacity>
@@ -268,9 +283,19 @@ const styles = StyleSheet.create({
         borderRadius: 22,
         alignItems: 'center',
         justifyContent: 'center',
+        position: 'relative',
     },
     actionBtnText: {
         fontSize: FONTS.sizes.lg,
+    },
+    badge: {
+        position: 'absolute',
+        top: 10,
+        right: 12,
+        width: 10,
+        height: 10,
+        borderRadius: 5,
+        backgroundColor: '#FF3B30',
     },
     statsRow: {
         flexDirection: 'row',

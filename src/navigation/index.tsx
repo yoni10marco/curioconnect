@@ -13,6 +13,7 @@ import LearningJourneyScreen from '../screens/app/LearningJourneyScreen';
 import KnowledgeLibraryScreen from '../screens/app/KnowledgeLibraryScreen';
 import AboutScreen from '../screens/app/AboutScreen';
 import FeedbackScreen from '../screens/app/FeedbackScreen';
+import NewsScreen from '../screens/app/NewsScreen';
 
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store/useAuthStore';
@@ -35,6 +36,7 @@ export type AppStackParamList = {
     KnowledgeLibrary: undefined;
     About: undefined;
     Feedback: undefined;
+    News: undefined;
 };
 
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
@@ -109,6 +111,11 @@ function AppNavigator() {
             <AppStack.Screen
                 name="Feedback"
                 component={FeedbackScreen}
+                options={{ headerShown: false, animation: 'slide_from_right' }}
+            />
+            <AppStack.Screen
+                name="News"
+                component={NewsScreen}
                 options={{ headerShown: false, animation: 'slide_from_right' }}
             />
         </AppStack.Navigator>

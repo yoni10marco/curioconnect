@@ -43,3 +43,11 @@ export type DailyLesson = {
     is_completed: boolean;
     created_at: string;
 };
+
+export type NewsMessage = {
+    id: string;
+    title: string;
+    content: string;
+    created_at: string;
+    is_read?: boolean; // computed from client joined query
+};
