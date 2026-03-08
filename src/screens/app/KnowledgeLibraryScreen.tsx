@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../store/useAuthStore';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/theme';
@@ -12,6 +12,14 @@ export default function KnowledgeLibraryScreen() {
     const { session, profile } = useAuthStore();
     const [lessons, setLessons] = useState<DailyLesson[]>([]);
     const [loading, setLoading] = useState(true);
+
+    const scrollRef = React.useRef<ScrollView>(null);
+
+    useFocusEffect(
+        React.useCallback(() => {
+            scrollRef.current?.scrollTo({ y: 0, animated: false });
+        }, [])
+    );
 
     useEffect(() => {
         const fetchKnowledge = async () => {
@@ -54,7 +62,7 @@ export default function KnowledgeLibraryScreen() {
                     </Text>
                 </View>
             ) : (
-                <ScrollView contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false}>
+                <ScrollView ref={scrollRef} contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false}>
                     {lessons.map((lesson) => (
                         <View key={lesson.id} style={styles.lessonCard}>
                             <View style={styles.lessonIconBox}>

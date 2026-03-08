@@ -10,7 +10,7 @@ import {
     Linking,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/theme';
 import { useAuthStore } from '../../store/useAuthStore';
@@ -26,6 +26,13 @@ export default function DashboardScreen() {
     const { profile } = useAuthStore();
     const { fetchOrGenerateLesson, loading, lesson, resetLesson } = useLessonStore();
 
+    const scrollRef = useRef<ScrollView>(null);
+
+    useFocusEffect(
+        React.useCallback(() => {
+            scrollRef.current?.scrollTo({ y: 0, animated: false });
+        }, [])
+    );
 
     // Streak fire pulse animation
     const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -74,123 +81,130 @@ export default function DashboardScreen() {
 
     return (
         <View style={styles.container}>
-            {/* Header */}
-            <LinearGradient colors={['#58CC02', '#3D9A00']} style={styles.header}>
-                {/* Version badge - top left */}
-                <View style={styles.versionRow}>
-                    <View style={styles.versionBadge}>
-                        <Text style={styles.versionText}>v{APP_VERSION}</Text>
-                    </View>
-                </View>
-
-                <View style={styles.headerContent}>
-                    <View>
-                        <Text style={styles.greeting}>
-                            Hey, {profile?.username ?? 'Learner'}! 👋
-                        </Text>
-                        <Text style={styles.subGreeting}>
-                            {todayCompleted ? "I studied today! 🎯" : "Ready for today's mission?"}
-                        </Text>
-                    </View>
-                    <View style={styles.headerRightActions}>
-                        <TouchableOpacity onPress={() => navigation.navigate('About')} style={styles.actionBtn}>
-                            <Text style={styles.actionBtnText}>ℹ️</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={() => navigation.navigate('Profile')} style={styles.actionBtn}>
-                            <Text style={styles.actionBtnText}>👤</Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
-
-                {/* Stats Row */}
-                <View style={styles.statsRow}>
-                    {/* Streak */}
-                    <TouchableOpacity onPress={() => navigation.navigate('Leaderboard')} style={styles.statCard}>
-                        <Animated.Text style={[styles.statEmoji, { transform: [{ scale: pulseAnim }], opacity: fireOpacity }]}>
-                            🔥
-                        </Animated.Text>
-                        <Text style={styles.statValue}>{profile?.streak_count ?? 0}</Text>
-                        <Text style={styles.statLabel}>Day Streak</Text>
-                    </TouchableOpacity>
-
-                    {/* Divider */}
-                    <View style={styles.statDivider} />
-
-                    {/* XP */}
-                    <TouchableOpacity onPress={() => navigation.navigate('Leaderboard')} style={styles.statCard}>
-                        <Text style={styles.statEmoji}>⭐</Text>
-                        <Text style={styles.statValue}>{profile?.total_xp ?? 0}</Text>
-                        <Text style={styles.statLabel}>Total XP</Text>
-                    </TouchableOpacity>
-                </View>
-            </LinearGradient>
-
             {/* Main Content */}
-            <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-                {/* Daily Mission Card */}
-                <View style={styles.missionCard}>
-                    <View style={styles.missionIconRow}>
-                        <Text style={styles.missionIcon}>🎯</Text>
-                        <View style={styles.missionBadge}>
-                            <Text style={styles.missionBadgeText}>DAILY MISSION</Text>
+            <ScrollView
+                ref={scrollRef}
+                style={{ flex: 1 }}
+                contentContainerStyle={styles.content}
+                showsVerticalScrollIndicator={false}
+            >
+                {/* Header */}
+                <LinearGradient colors={['#58CC02', '#3D9A00']} style={styles.header}>
+                    {/* Version badge - top left */}
+                    <View style={styles.versionRow}>
+                        <View style={styles.versionBadge}>
+                            <Text style={styles.versionText}>v{APP_VERSION}</Text>
                         </View>
                     </View>
-                    <Text style={styles.missionTitle}>
-                        {todayCompleted ? "Mission Complete! 🎉" : "Your personalized lesson awaits"}
-                    </Text>
-                    <Text style={styles.missionDesc}>
-                        {todayCompleted
-                            ? "You've earned 50 XP today. Come back tomorrow to keep your streak!"
-                            : "AI-crafted just for you, bridging your interests with new knowledge."}
-                    </Text>
 
-                    <TouchableOpacity
-                        style={[styles.startButton, todayCompleted && styles.startButtonDone]}
-                        onPress={handleStartLesson}
-                        disabled={loading || todayCompleted}
-                        activeOpacity={0.85}
-                    >
-                        <Text style={styles.startButtonText}>
-                            {loading ? '⏳ Preparing...' : todayCompleted ? '✅ Completed!' : '🚀 Start Lesson'}
+                    <View style={styles.headerContent}>
+                        <View>
+                            <Text style={styles.greeting}>
+                                Hey, {profile?.username ?? 'Learner'}! 👋
+                            </Text>
+                            <Text style={styles.subGreeting}>
+                                {todayCompleted ? "I studied today! 🎯" : "Ready for today's mission?"}
+                            </Text>
+                        </View>
+                        <View style={styles.headerRightActions}>
+                            <TouchableOpacity onPress={() => navigation.navigate('About')} style={styles.actionBtn}>
+                                <Text style={styles.actionBtnText}>ℹ️</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity onPress={() => navigation.navigate('Profile')} style={styles.actionBtn}>
+                                <Text style={styles.actionBtnText}>👤</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+
+                    {/* Stats Row */}
+                    <View style={styles.statsRow}>
+                        {/* Streak */}
+                        <TouchableOpacity onPress={() => navigation.navigate('Leaderboard')} style={styles.statCard}>
+                            <Animated.Text style={[styles.statEmoji, { transform: [{ scale: pulseAnim }], opacity: fireOpacity }]}>
+                                🔥
+                            </Animated.Text>
+                            <Text style={styles.statValue}>{profile?.streak_count ?? 0}</Text>
+                            <Text style={styles.statLabel}>Day Streak</Text>
+                        </TouchableOpacity>
+
+                        {/* Divider */}
+                        <View style={styles.statDivider} />
+
+                        {/* XP */}
+                        <TouchableOpacity onPress={() => navigation.navigate('Leaderboard')} style={styles.statCard}>
+                            <Text style={styles.statEmoji}>⭐</Text>
+                            <Text style={styles.statValue}>{profile?.total_xp ?? 0}</Text>
+                            <Text style={styles.statLabel}>Total XP</Text>
+                        </TouchableOpacity>
+                    </View>
+                </LinearGradient>
+
+                <View style={styles.innerContent}>
+                    {/* Daily Mission Card */}
+                    <View style={styles.missionCard}>
+                        <View style={styles.missionIconRow}>
+                            <Text style={styles.missionIcon}>🎯</Text>
+                            <View style={styles.missionBadge}>
+                                <Text style={styles.missionBadgeText}>DAILY MISSION</Text>
+                            </View>
+                        </View>
+                        <Text style={styles.missionTitle}>
+                            {todayCompleted ? "Mission Complete! 🎉" : "Your personalized lesson awaits"}
                         </Text>
+                        <Text style={styles.missionDesc}>
+                            {todayCompleted
+                                ? "You've earned 50 XP today. Come back tomorrow to keep your streak!"
+                                : "AI-crafted just for you, bridging your interests with new knowledge."}
+                        </Text>
+
+                        <TouchableOpacity
+                            style={[styles.startButton, todayCompleted && styles.startButtonDone]}
+                            onPress={handleStartLesson}
+                            disabled={loading || todayCompleted}
+                            activeOpacity={0.85}
+                        >
+                            <Text style={styles.startButtonText}>
+                                {loading ? '⏳ Preparing...' : todayCompleted ? '✅ Completed!' : '🚀 Start Lesson'}
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
+
+                    {/* Info Cards */}
+                    <View style={styles.infoRow}>
+                        <TouchableOpacity onPress={() => navigation.navigate('KnowledgeLibrary')} activeOpacity={0.8} style={styles.infoCard}>
+                            <Text style={styles.infoEmoji}>📖</Text>
+                            <Text style={styles.infoTitle}>Library</Text>
+                            <Text style={styles.infoLabel}>View learned</Text>
+                        </TouchableOpacity>
+                        <View style={styles.infoCard}>
+                            <Text style={styles.infoEmoji}>🎓</Text>
+                            <Text style={styles.infoTitle}>+50 XP</Text>
+                            <Text style={styles.infoLabel}>Reward</Text>
+                        </View>
+                        <View style={styles.infoCard}>
+                            <Text style={styles.infoEmoji}>❓</Text>
+                            <Text style={styles.infoTitle}>3</Text>
+                            <Text style={styles.infoLabel}>Quiz questions</Text>
+                        </View>
+                    </View>
+
+                    {/* Send Feedback Button */}
+                    <TouchableOpacity style={styles.feedbackCard} onPress={handleFeedback} activeOpacity={0.8}>
+                        <Text style={styles.feedbackEmoji}>💬</Text>
+                        <View style={styles.feedbackTextCol}>
+                            <Text style={styles.feedbackTitle}>Send Feedback</Text>
+                            <Text style={styles.feedbackDesc}>Help us improve CurioConnect</Text>
+                        </View>
+                        <Text style={styles.feedbackArrow}>→</Text>
                     </TouchableOpacity>
+
+                    {/* Motivational Footer */}
+                    <Text style={styles.motivational}>
+                        {(profile?.streak_count ?? 0) > 1
+                            ? `🔥 ${profile?.streak_count}-day streak! Keep it up!`
+                            : "Every expert was once a beginner. Start today!"}
+                    </Text>
                 </View>
-
-                {/* Info Cards */}
-                <View style={styles.infoRow}>
-                    <TouchableOpacity onPress={() => navigation.navigate('KnowledgeLibrary')} activeOpacity={0.8} style={styles.infoCard}>
-                        <Text style={styles.infoEmoji}>📖</Text>
-                        <Text style={styles.infoTitle}>Library</Text>
-                        <Text style={styles.infoLabel}>View learned</Text>
-                    </TouchableOpacity>
-                    <View style={styles.infoCard}>
-                        <Text style={styles.infoEmoji}>🎓</Text>
-                        <Text style={styles.infoTitle}>+50 XP</Text>
-                        <Text style={styles.infoLabel}>Reward</Text>
-                    </View>
-                    <View style={styles.infoCard}>
-                        <Text style={styles.infoEmoji}>❓</Text>
-                        <Text style={styles.infoTitle}>3</Text>
-                        <Text style={styles.infoLabel}>Quiz questions</Text>
-                    </View>
-                </View>
-
-                {/* Send Feedback Button */}
-                <TouchableOpacity style={styles.feedbackCard} onPress={handleFeedback} activeOpacity={0.8}>
-                    <Text style={styles.feedbackEmoji}>💬</Text>
-                    <View style={styles.feedbackTextCol}>
-                        <Text style={styles.feedbackTitle}>Send Feedback</Text>
-                        <Text style={styles.feedbackDesc}>Help us improve CurioConnect</Text>
-                    </View>
-                    <Text style={styles.feedbackArrow}>→</Text>
-                </TouchableOpacity>
-
-                {/* Motivational Footer */}
-                <Text style={styles.motivational}>
-                    {(profile?.streak_count ?? 0) > 1
-                        ? `🔥 ${profile?.streak_count}-day streak! Keep it up!`
-                        : "Every expert was once a beginner. Start today!"}
-                </Text>
             </ScrollView>
 
             <BottomNav currentRoute="Dashboard" />
@@ -201,9 +215,12 @@ export default function DashboardScreen() {
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: COLORS.background },
     header: {
-        paddingTop: 48,
+        paddingTop: 60,
         paddingBottom: SPACING.xl,
         paddingHorizontal: SPACING.lg,
+        borderBottomLeftRadius: RADIUS.xl,
+        borderBottomRightRadius: RADIUS.xl,
+        overflow: 'hidden',
     },
     versionRow: {
         flexDirection: 'row',
@@ -280,7 +297,8 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(255,255,255,0.3)',
         marginHorizontal: SPACING.md,
     },
-    content: { padding: SPACING.lg, gap: SPACING.lg, paddingBottom: 40 },
+    content: { paddingBottom: 100 },
+    innerContent: { padding: SPACING.lg, gap: SPACING.lg },
     missionCard: {
         backgroundColor: COLORS.white,
         borderRadius: RADIUS.xl,

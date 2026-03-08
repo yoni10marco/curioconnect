@@ -12,7 +12,7 @@ import {
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/theme';
 import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../store/useAuthStore';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import BottomNav from '../../components/BottomNav';
 
 const ALL_INTERESTS = [
@@ -47,6 +47,14 @@ export default function ProfileScreen() {
     const [aiLoading, setAiLoading] = useState(false);
 
     const navigation = useNavigation();
+
+    const scrollRef = React.useRef<ScrollView>(null);
+
+    useFocusEffect(
+        React.useCallback(() => {
+            scrollRef.current?.scrollTo({ y: 0, animated: false });
+        }, [])
+    );
 
     const fetchInterests = async () => {
         if (!session) return;
@@ -141,7 +149,7 @@ export default function ProfileScreen() {
 
     return (
         <View style={styles.container}>
-            <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+            <ScrollView ref={scrollRef} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
 
                 {/* Profile Header */}
                 <View style={styles.headerCard}>

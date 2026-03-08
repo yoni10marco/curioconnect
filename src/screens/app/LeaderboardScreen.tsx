@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/theme';
 import BottomNav from '../../components/BottomNav';
 import { supabase } from '../../lib/supabase';
@@ -16,6 +16,14 @@ export default function LeaderboardScreen() {
     const [leaders, setLeaders] = useState<Profile[]>([]);
     const [loading, setLoading] = useState(true);
 
+    const scrollRef = React.useRef<ScrollView>(null);
+
+    useFocusEffect(
+        React.useCallback(() => {
+            scrollRef.current?.scrollTo({ y: 0, animated: false });
+        }, [])
+    );
+
     useEffect(() => {
         const fetchLeaderboard = async () => {
             setLoading(true);
@@ -25,7 +33,7 @@ export default function LeaderboardScreen() {
                 .from('profiles')
                 .select('*')
                 .order(column, { ascending: false })
-                .limit(50);
+                .limit(1000);
 
             if (!error && data) {
                 setLeaders(data as Profile[]);
@@ -73,7 +81,7 @@ export default function LeaderboardScreen() {
                 {loading ? (
                     <ActivityIndicator size="large" color={COLORS.primary} style={{ marginTop: 40 }} />
                 ) : (
-                    <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+                    <ScrollView ref={scrollRef} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
                         {leaders.length === 0 ? (
                             <Text style={styles.emptyText}>No users found.</Text>
                         ) : (
