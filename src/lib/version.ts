@@ -1,2 +1,2 @@
 // Bump this manually with every release
-export const APP_VERSION = '0.1.26';
+export const APP_VERSION = '0.1.27';

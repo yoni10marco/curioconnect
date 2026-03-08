@@ -64,36 +64,24 @@ export const useLessonStore = create<LessonState>((set) => ({
 
         const today = new Date().toISOString().split('T')[0];
 
-        const DEBUG_ALWAYS_GENERATE_NEW = true; // Set to true to force new Gemini generation
+        // 1. Check if lesson already exists for today
+        const { data: existing } = await supabase
+            .from('daily_lessons')
+            .select('*')
+            .eq('user_id', session.user.id)
+            .eq('created_at', today)
+            .single();
 
-        // 1. Check if lesson already exists for today (skip if debugging)
-        if (!DEBUG_ALWAYS_GENERATE_NEW) {
-            const { data: existing } = await supabase
-                .from('daily_lessons')
-                .select('*')
-                .eq('user_id', session.user.id)
-                .eq('created_at', today)
-                .single();
-
-            if (existing) {
-                set({ lesson: normalizeLesson(existing as DailyLesson), loading: false });
-                return;
-            }
+        if (existing) {
+            set({ lesson: normalizeLesson(existing as DailyLesson), loading: false });
+            return;
         }
 
 
-        // 2. Pick a random topic not in user history
-        const { data: usedTopics } = await supabase
-            .from('daily_lessons')
-            .select('topic_id')
-            .eq('user_id', session.user.id);
-
-        const usedTopicIds = (usedTopics ?? []).map((l: { topic_id: string }) => l.topic_id).filter(Boolean);
-
+        // 2. Pick a purely random topic from all topics
         const { data: allTopics } = await supabase.from('topics').select('*');
-        const availableTopics = (allTopics ?? []).filter((t: { id: string }) => !usedTopicIds.includes(t.id));
-        const topicPool = availableTopics.length > 0 ? availableTopics : allTopics ?? [];
-        const randomTopic = topicPool[Math.floor(Math.random() * topicPool.length)];
+        const topicPool = allTopics ?? [];
+        const randomTopic = topicPool.length > 0 ? topicPool[Math.floor(Math.random() * topicPool.length)] : null;
 
         // 3. Pick a random user interest
         const { data: interests } = await supabase
@@ -117,7 +105,7 @@ export const useLessonStore = create<LessonState>((set) => ({
                     user_id: session.user.id,
                     access_token: accessToken, // belt-and-suspenders for web
                     difficulty_level: profile?.difficulty_level ?? 'adult',
-                    force_new: DEBUG_ALWAYS_GENERATE_NEW, // tell edge function to delete and regenerate
+                    force_new: false,
                 },
             });
 
@@ -158,9 +146,12 @@ export const useLessonStore = create<LessonState>((set) => ({
             newStreak = profile.streak_count ?? 1; // Already counted today
         }
 
+        const isReplaying = lesson.is_completed;
+        const xpToAdd = isReplaying ? 0 : 30;
+
         // Update XP + streak
         await updateProfile({
-            total_xp: (profile.total_xp ?? 0) + 50,
+            total_xp: (profile.total_xp ?? 0) + xpToAdd,
             streak_count: newStreak,
             last_lesson_date: todayStr,
         });

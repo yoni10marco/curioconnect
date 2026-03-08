@@ -24,6 +24,7 @@ const triggerHaptic = async (type: 'success' | 'error') => {
 import { COLORS, FONTS, SPACING, RADIUS } from '../lib/theme';
 import { QuizQuestion } from '../lib/types';
 import { useLessonStore } from '../store/useLessonStore';
+import { useAuthStore } from '../store/useAuthStore';
 
 interface Props {
     visible: boolean;
@@ -47,7 +48,8 @@ export default function QuizModal({ visible, questions, isFinalPage, onClose, on
     const [correctAnswerStr, setCorrectAnswerStr] = useState<string>('');
 
     const shakeAnim = useRef(new Animated.Value(0)).current;
-    const { completeLesson } = useLessonStore();
+    const { lesson, completeLesson } = useLessonStore();
+    const { addXp } = useAuthStore();
 
     const shake = () => {
         triggerHaptic('error');
@@ -82,6 +84,9 @@ export default function QuizModal({ visible, questions, isFinalPage, onClose, on
             triggerHaptic('success');
             setAnswerState('correct');
             setScore((s) => s + 1);
+            if (!lesson?.is_completed) {
+                addXp(20);
+            }
         } else {
             setAnswerState('wrong');
             shake();
@@ -163,8 +168,9 @@ export default function QuizModal({ visible, questions, isFinalPage, onClose, on
                             {isFinalPage ? 'Lesson Complete!' : 'Knowledge Checked!'}
                         </Text>
                         <Text style={styles.resultsScore}>{score} / {questions.length} correct</Text>
-                        {isFinalPage && <Text style={styles.resultsXp}>+50 XP Earned! 🎉</Text>}
-                        {isFinalPage && <Text style={styles.resultsStreak}>Your streak is growing! 🔥</Text>}
+                        {!lesson?.is_completed && <Text style={styles.resultsXp}>+{score * 20} XP Earned! 🎉</Text>}
+                        {isFinalPage && !lesson?.is_completed && <Text style={styles.resultsXp}>+30 XP Final Bonus! 🎓</Text>}
+                        {isFinalPage && !lesson?.is_completed && <Text style={styles.resultsStreak}>Your streak is growing! 🔥</Text>}
                         <TouchableOpacity style={styles.doneButton} onPress={handleRestartAndClose}>
                             <Text style={styles.doneButtonText}>{isFinalPage ? 'Back to Dashboard' : 'Read Next Page'}</Text>
                         </TouchableOpacity>

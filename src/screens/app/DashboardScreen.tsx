@@ -23,7 +23,7 @@ type Nav = NativeStackNavigationProp<AppStackParamList, 'Dashboard'>;
 
 export default function DashboardScreen() {
     const navigation = useNavigation<Nav>();
-    const { profile } = useAuthStore();
+    const { profile, checkAndResetStreak } = useAuthStore();
     const { fetchOrGenerateLesson, loading, lesson, resetLesson } = useLessonStore();
 
     const scrollRef = useRef<ScrollView>(null);
@@ -31,6 +31,7 @@ export default function DashboardScreen() {
     useFocusEffect(
         React.useCallback(() => {
             scrollRef.current?.scrollTo({ y: 0, animated: false });
+            checkAndResetStreak();
         }, [])
     );
 
@@ -153,18 +154,18 @@ export default function DashboardScreen() {
                         </Text>
                         <Text style={styles.missionDesc}>
                             {todayCompleted
-                                ? "You've earned 50 XP today. Come back tomorrow to keep your streak!"
+                                ? "You've earned 30 XP for completing today's mission. Come back tomorrow to keep your streak!"
                                 : "AI-crafted just for you, bridging your interests with new knowledge."}
                         </Text>
 
                         <TouchableOpacity
                             style={[styles.startButton, todayCompleted && styles.startButtonDone]}
                             onPress={handleStartLesson}
-                            disabled={loading || todayCompleted}
+                            disabled={loading}
                             activeOpacity={0.85}
                         >
-                            <Text style={styles.startButtonText}>
-                                {loading ? '⏳ Preparing...' : todayCompleted ? '✅ Completed!' : '🚀 Start Lesson'}
+                            <Text style={[styles.startButtonText, todayCompleted && styles.startButtonTextDone]}>
+                                {loading ? '⏳ Preparing...' : todayCompleted ? '🔄 Retry Lesson' : '🚀 Start Lesson'}
                             </Text>
                         </TouchableOpacity>
                     </View>
@@ -178,7 +179,7 @@ export default function DashboardScreen() {
                         </TouchableOpacity>
                         <View style={styles.infoCard}>
                             <Text style={styles.infoEmoji}>🎓</Text>
-                            <Text style={styles.infoTitle}>+50 XP</Text>
+                            <Text style={styles.infoTitle}>+30 XP</Text>
                             <Text style={styles.infoLabel}>Reward</Text>
                         </View>
                         <View style={styles.infoCard}>
@@ -352,7 +353,9 @@ const styles = StyleSheet.create({
         elevation: 6,
     },
     startButtonDone: {
-        backgroundColor: COLORS.textLight,
+        backgroundColor: COLORS.background,
+        borderWidth: 2,
+        borderColor: COLORS.border,
         shadowOpacity: 0,
         elevation: 0,
     },
@@ -361,6 +364,9 @@ const styles = StyleSheet.create({
         fontSize: FONTS.sizes.lg,
         fontWeight: FONTS.weights.bold,
         letterSpacing: 0.3,
+    },
+    startButtonTextDone: {
+        color: COLORS.textDark,
     },
     infoRow: {
         flexDirection: 'row',

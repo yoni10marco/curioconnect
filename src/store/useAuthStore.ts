@@ -14,6 +14,8 @@ interface AuthState {
     signUp: (email: string, password: string, username: string) => Promise<{ error: string | null }>;
     signOut: () => Promise<void>;
     updateProfile: (updates: Partial<Profile>) => Promise<void>;
+    addXp: (amount: number) => Promise<void>;
+    checkAndResetStreak: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -73,5 +75,29 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             .single();
         // Always update in-memory state — use server data if available, else merge locally
         set({ profile: (data ?? (profile ? { ...profile, ...updates } : null)) as Profile | null });
+    },
+
+    addXp: async (amount: number) => {
+        const { profile, updateProfile } = get();
+        if (profile) {
+            await updateProfile({ total_xp: (profile.total_xp ?? 0) + amount });
+        }
+    },
+
+    checkAndResetStreak: async () => {
+        const { profile, updateProfile } = get();
+        if (!profile || !profile.last_lesson_date) return;
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const todayStr = today.toISOString().split('T')[0];
+
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+        if (profile.last_lesson_date !== todayStr && profile.last_lesson_date !== yesterdayStr) {
+            await updateProfile({ streak_count: 0 });
+        }
     },
 }));
