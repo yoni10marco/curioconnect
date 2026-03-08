@@ -8,6 +8,7 @@ interface LessonState {
     loading: boolean;
     error: string | null;
     fetchOrGenerateLesson: () => Promise<void>;
+    checkTodayLesson: () => Promise<void>;
     completeLesson: () => Promise<void>;
     resetLesson: () => void;
 }
@@ -32,6 +33,27 @@ export const useLessonStore = create<LessonState>((set) => ({
     error: null,
 
     resetLesson: () => set({ lesson: null, error: null }),
+
+    checkTodayLesson: async () => {
+        let { session } = useAuthStore.getState();
+        if (!session) {
+            const { data } = await supabase.auth.getSession();
+            session = data.session;
+        }
+        if (!session) return;
+
+        const today = new Date().toISOString().split('T')[0];
+        const { data: existing } = await supabase
+            .from('daily_lessons')
+            .select('*')
+            .eq('user_id', session.user.id)
+            .eq('created_at', today)
+            .single();
+
+        if (existing) {
+            set({ lesson: normalizeLesson(existing as DailyLesson) });
+        }
+    },
 
     fetchOrGenerateLesson: async () => {
         set({ loading: true, error: null });

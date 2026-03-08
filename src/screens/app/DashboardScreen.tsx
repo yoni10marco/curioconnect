@@ -24,7 +24,7 @@ type Nav = NativeStackNavigationProp<AppStackParamList, 'Dashboard'>;
 export default function DashboardScreen() {
     const navigation = useNavigation<Nav>();
     const { profile, checkAndResetStreak } = useAuthStore();
-    const { fetchOrGenerateLesson, loading, lesson, resetLesson } = useLessonStore();
+    const { fetchOrGenerateLesson, loading, lesson, resetLesson, checkTodayLesson } = useLessonStore();
 
     const scrollRef = useRef<ScrollView>(null);
 
@@ -32,6 +32,7 @@ export default function DashboardScreen() {
         React.useCallback(() => {
             scrollRef.current?.scrollTo({ y: 0, animated: false });
             checkAndResetStreak();
+            checkTodayLesson();
         }, [])
     );
 
@@ -183,9 +184,9 @@ export default function DashboardScreen() {
                             <Text style={styles.infoLabel}>Reward</Text>
                         </View>
                         <View style={styles.infoCard}>
-                            <Text style={styles.infoEmoji}>❓</Text>
-                            <Text style={styles.infoTitle}>3</Text>
-                            <Text style={styles.infoLabel}>Quiz questions</Text>
+                            <Text style={styles.infoEmoji}>✅</Text>
+                            <Text style={styles.infoTitle}>+20 XP</Text>
+                            <Text style={styles.infoLabel}>Per right answer</Text>
                         </View>
                     </View>
 
