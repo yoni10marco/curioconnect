@@ -28,6 +28,11 @@ export default function LessonReaderScreen() {
     const progressAnim = useRef(new Animated.Value(0)).current;
     const scrollViewRef = useRef<ScrollView>(null);
 
+    // Scroll to top automatically when page index changes (for long reading pages)
+    React.useEffect(() => {
+        scrollViewRef.current?.scrollTo({ y: 0, animated: false });
+    }, [currentPageIndex]);
+
     // quiz_data may arrive from Supabase as a JSON string on web — parse it
     const lessonPages = React.useMemo(() => {
         if (!lesson) return [];

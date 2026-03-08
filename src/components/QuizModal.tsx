@@ -46,6 +46,13 @@ export default function QuizModal({ visible, questions, isFinalPage, onClose, on
     const [shuffledOptions, setShuffledOptions] = useState<string[]>([]);
     const [correctAnswerStr, setCorrectAnswerStr] = useState<string>('');
 
+    const scrollRef = useRef<ScrollView>(null);
+
+    // Auto-scroll to top when question changes
+    React.useEffect(() => {
+        scrollRef.current?.scrollTo({ y: 0, animated: false });
+    }, [current]);
+
     const shakeAnim = useRef(new Animated.Value(0)).current;
     const { completeLesson } = useLessonStore();
 
@@ -182,6 +189,7 @@ export default function QuizModal({ visible, questions, isFinalPage, onClose, on
                             </ScrollView>
                         ) : (
                             <ScrollView
+                                ref={scrollRef}
                                 showsVerticalScrollIndicator={false}
                                 contentContainerStyle={{ paddingBottom: SPACING.xl, flexGrow: 1 }}
                             >

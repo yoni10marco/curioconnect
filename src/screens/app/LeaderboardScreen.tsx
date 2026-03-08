@@ -33,7 +33,7 @@ export default function LeaderboardScreen() {
                 .from('profiles')
                 .select('*')
                 .order(column, { ascending: false })
-                .limit(1000);
+                .limit(100);
 
             if (!error && data) {
                 setLeaders(data as Profile[]);
