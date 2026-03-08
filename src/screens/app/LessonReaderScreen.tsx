@@ -10,7 +10,7 @@ import {
     NativeScrollEvent,
 } from 'react-native';
 import MarkdownDisplay from 'react-native-markdown-display';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/theme';
 import { useLessonStore } from '../../store/useLessonStore';
@@ -30,8 +30,22 @@ export default function LessonReaderScreen() {
 
     // Scroll to top automatically when page index changes (for long reading pages)
     React.useEffect(() => {
-        scrollViewRef.current?.scrollTo({ y: 0, animated: false });
+        setTimeout(() => {
+            scrollViewRef.current?.scrollTo({ y: 0, animated: false });
+            setProgress(0);
+            progressAnim.setValue(0);
+        }, 50);
     }, [currentPageIndex]);
+
+    useFocusEffect(
+        React.useCallback(() => {
+            setTimeout(() => {
+                scrollViewRef.current?.scrollTo({ y: 0, animated: false });
+                setProgress(0);
+                progressAnim.setValue(0);
+            }, 50);
+        }, [])
+    );
 
     // quiz_data may arrive from Supabase as a JSON string on web — parse it
     const lessonPages = React.useMemo(() => {

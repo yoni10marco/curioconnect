@@ -27,16 +27,18 @@ export default function LeaderboardScreen() {
     useEffect(() => {
         const fetchLeaderboard = async () => {
             setLoading(true);
-            const column = activeTab === 'xp' ? 'total_xp' : 'streak_count';
+            try {
+                const { data, error } = await supabase.functions.invoke('get-leaderboard', {
+                    body: { activeTab },
+                });
 
-            const { data, error } = await supabase
-                .from('profiles')
-                .select('*')
-                .order(column, { ascending: false })
-                .limit(100);
-
-            if (!error && data) {
-                setLeaders(data as Profile[]);
+                if (error) {
+                    console.error("Error from get-leaderboard Edge Function:", error);
+                } else if (data) {
+                    setLeaders(data as Profile[]);
+                }
+            } catch (err) {
+                console.error("Network or invoke error:", err);
             }
             setLoading(false);
         };

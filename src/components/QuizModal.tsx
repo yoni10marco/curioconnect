@@ -50,7 +50,9 @@ export default function QuizModal({ visible, questions, isFinalPage, onClose, on
 
     // Auto-scroll to top when question changes
     React.useEffect(() => {
-        scrollRef.current?.scrollTo({ y: 0, animated: false });
+        setTimeout(() => {
+            scrollRef.current?.scrollTo({ y: 0, animated: false });
+        }, 50);
     }, [current]);
 
     const shakeAnim = useRef(new Animated.Value(0)).current;
