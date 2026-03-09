@@ -96,10 +96,17 @@ export default function ProfileScreen() {
         if (error) {
             console.error(error);
             Alert.alert('Error', 'Failed to discover interests.');
+        } else if (data?.error === 'inappropriate_content') {
+            Alert.alert('Inappropriate Content', 'Please keep your description appropriate for all ages.');
         } else {
-            Alert.alert('Success', `Discovered new interests! Adding to your profile...`);
+            const added: string[] = data?.added ?? [];
+            if (added.length > 0) {
+                Alert.alert('Interests Added! ✨', `Added: ${added.join(', ')}`);
+            } else {
+                Alert.alert('No New Interests', 'These interests are already in your profile!');
+            }
             setAiPrompt('');
-            await fetchInterests(); // Reload list to show newly added DB interests
+            await fetchInterests();
         }
         setAiLoading(false);
     };
@@ -236,23 +243,46 @@ export default function ProfileScreen() {
                     {loading ? (
                         <ActivityIndicator color={COLORS.primary} style={{ marginTop: 20 }} />
                     ) : (
-                        <View style={styles.grid}>
-                            {ALL_INTERESTS.map((interest) => {
-                                const isSelected = selected.has(interest);
+                        <>
+                            <View style={styles.grid}>
+                                {ALL_INTERESTS.map((interest) => {
+                                    const isSelected = selected.has(interest);
+                                    return (
+                                        <TouchableOpacity
+                                            key={interest}
+                                            style={[styles.chip, isSelected && styles.chipSelected]}
+                                            onPress={() => toggle(interest)}
+                                            activeOpacity={0.8}
+                                        >
+                                            <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>
+                                                {interest}
+                                            </Text>
+                                        </TouchableOpacity>
+                                    );
+                                })}
+                            </View>
+                            {(() => {
+                                const customInterests = Array.from(selected).filter(i => !ALL_INTERESTS.includes(i));
+                                if (customInterests.length === 0) return null;
                                 return (
-                                    <TouchableOpacity
-                                        key={interest}
-                                        style={[styles.chip, isSelected && styles.chipSelected]}
-                                        onPress={() => toggle(interest)}
-                                        activeOpacity={0.8}
-                                    >
-                                        <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>
-                                            {interest}
-                                        </Text>
-                                    </TouchableOpacity>
+                                    <>
+                                        <Text style={styles.cardSubtitle}>✨ AI Discovered</Text>
+                                        <View style={styles.grid}>
+                                            {customInterests.map((interest) => (
+                                                <TouchableOpacity
+                                                    key={interest}
+                                                    style={[styles.chip, styles.chipSelected]}
+                                                    onPress={() => toggle(interest)}
+                                                    activeOpacity={0.8}
+                                                >
+                                                    <Text style={styles.chipTextSelected}>{interest} ×</Text>
+                                                </TouchableOpacity>
+                                            ))}
+                                        </View>
+                                    </>
                                 );
-                            })}
-                        </View>
+                            })()}
+                        </>
                     )}
                 </View>
 
@@ -303,6 +333,7 @@ const styles = StyleSheet.create({
     cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: SPACING.xs },
     cardTitle: { fontSize: FONTS.sizes.lg, fontWeight: FONTS.weights.bold, color: COLORS.textDark, marginBottom: SPACING.xs },
     cardDesc: { fontSize: FONTS.sizes.sm, color: COLORS.textMedium, marginBottom: SPACING.md, lineHeight: 20 },
+    cardSubtitle: { fontSize: FONTS.sizes.sm, fontWeight: FONTS.weights.bold, color: COLORS.textMedium, marginTop: SPACING.md, marginBottom: SPACING.sm },
     comingSoonBadge: { backgroundColor: '#FFF3E0', paddingHorizontal: 8, paddingVertical: 4, borderRadius: RADIUS.full },
     comingSoonText: { color: '#F57C00', fontSize: FONTS.sizes.xs, fontWeight: FONTS.weights.bold, textTransform: 'uppercase' },
     disabledInput: {
