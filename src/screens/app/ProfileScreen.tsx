@@ -98,6 +98,8 @@ export default function ProfileScreen() {
             Alert.alert('Error', 'Failed to discover interests.');
         } else if (data?.error === 'inappropriate_content') {
             Alert.alert('Inappropriate Content', 'Please keep your description appropriate for all ages.');
+        } else if (data?.error === 'interest_limit_reached') {
+            Alert.alert('Interest Limit Reached', 'You can have at most 25 interests. Remove some before discovering new ones.');
         } else {
             const added: string[] = data?.added ?? [];
             if (added.length > 0) {

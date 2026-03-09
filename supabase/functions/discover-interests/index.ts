@@ -1,6 +1,9 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
+const MAX_INTERESTS = 25;
+const MAX_DISCOVER_AT_ONCE = 3;
+
 Deno.serve(async (req: Request) => {
   const corsHeaders = {
     "Access-Control-Allow-Origin": "*",
@@ -23,7 +26,6 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // Authenticate user
     const authHeader = req.headers.get("Authorization");
     const token = authHeader?.replace("Bearer ", "");
 
@@ -53,19 +55,35 @@ Deno.serve(async (req: Request) => {
       });
     }
 
+    // Fetch existing interests
+    const { data: existingData } = await adminSupabase
+      .from("user_interests")
+      .select("interest_name")
+      .eq("user_id", user.id);
+
+    const existingCount = existingData?.length ?? 0;
+
+    if (existingCount >= MAX_INTERESTS) {
+      return new Response(JSON.stringify({ error: "interest_limit_reached", added: [] }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const existingSet = new Set(
+      (existingData ?? []).map((r: { interest_name: string }) => r.interest_name.toLowerCase())
+    );
+
     // Single Gemini call: moderation + interest discovery
     const geminiPrompt = `You are a content moderator and interest analyzer for a learning app for all ages (children, teens, and adults).
 
 First, check if the following user text is appropriate for all ages (reject violence, adult content, hate speech, self-harm, or any inappropriate topics).
 
-Then, if it is safe, extract and suggest 3 to 7 specific personal interests or hobbies the user seems to have based on their description. Be creative and specific — suggest interests they may not have thought of themselves. Format each interest as a relevant emoji followed by a short name (2-3 words max), for example: "🎻 Violin", "🧗 Rock Climbing", "🐠 Marine Biology", "🧩 Puzzle Solving".
+Then, if it is safe, suggest up to ${MAX_DISCOVER_AT_ONCE} specific personal interests or hobbies the user seems to have based on their description. Be creative and specific — suggest interests they may not have thought of themselves. Format each as a relevant emoji followed by a short name (2-3 words max), for example: "🎻 Violin", "🧗 Rock Climbing", "🐠 Marine Biology".
 
 User text: "${prompt.trim().replace(/"/g, '\\"')}"
 
-Return ONLY valid JSON in this exact format:
-{ "safe": boolean, "interests": string[] }
-
-If the text is not safe, return: { "safe": false, "interests": [] }`;
+Return ONLY valid JSON: { "safe": boolean, "interests": string[] }
+If not safe, return: { "safe": false, "interests": [] }`;
 
     const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`;
     const geminiResponse = await fetch(geminiUrl, {
@@ -99,22 +117,7 @@ If the text is not safe, return: { "safe": false, "interests": [] }`;
 
     const discoveredInterests: string[] = parsed.interests ?? [];
 
-    if (discoveredInterests.length === 0) {
-      return new Response(JSON.stringify({ added: [] }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Get user's existing interests to deduplicate
-    const { data: existingData } = await adminSupabase
-      .from("user_interests")
-      .select("interest_name")
-      .eq("user_id", user.id);
-
-    const existingSet = new Set(
-      (existingData ?? []).map((r: { interest_name: string }) => r.interest_name.toLowerCase())
-    );
-
+    // Filter out already-existing interests
     const newInterests = discoveredInterests.filter(
       (interest) => !existingSet.has(interest.toLowerCase())
     );
@@ -125,8 +128,11 @@ If the text is not safe, return: { "safe": false, "interests": [] }`;
       });
     }
 
-    // Insert new interests
-    const rows = newInterests.map((interest_name) => ({
+    // Respect the total cap
+    const slotsLeft = MAX_INTERESTS - existingCount;
+    const toInsert = newInterests.slice(0, slotsLeft);
+
+    const rows = toInsert.map((interest_name) => ({
       user_id: user.id,
       interest_name,
     }));
@@ -137,7 +143,7 @@ If the text is not safe, return: { "safe": false, "interests": [] }`;
       throw insertError;
     }
 
-    return new Response(JSON.stringify({ added: newInterests }), {
+    return new Response(JSON.stringify({ added: toInsert }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
