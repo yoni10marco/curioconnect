@@ -17,9 +17,10 @@ export default function FeedbackScreen() {
         }
 
         setSending(true);
+        const { data: { user } } = await supabase.auth.getUser();
         const { error } = await supabase
-            .from('news_messages')
-            .insert({ title: 'User Feedback', content: feedback.trim() });
+            .from('feedbacks')
+            .insert({ user_id: user?.id, content: feedback.trim() });
         setSending(false);
 
         if (error) {

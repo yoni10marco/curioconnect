@@ -9,6 +9,7 @@ export type Profile = {
     age?: number | null;
     job_title?: string | null;
     streak_freeze_count: number;
+    admin_role?: 'full_admin' | 'read_only_admin' | null;
 };
 
 export type UserInterest = {
@@ -51,4 +52,11 @@ export type NewsMessage = {
     content: string;
     created_at: string;
     is_read?: boolean; // computed from client joined query
+};
+
+export type Feedback = {
+    id: string;
+    user_id: string | null;
+    content: string;
+    created_at: string;
 };
