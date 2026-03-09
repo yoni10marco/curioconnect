@@ -233,7 +233,7 @@ export default function ProfileScreen() {
                     <View style={styles.cardHeader}>
                         <Text style={styles.cardTitle}>✨ AI Discover Interests</Text>
                         <Text style={[styles.cardDesc, { marginBottom: 0, fontWeight: FONTS.weights.bold, color: discoverUsed >= discoverLimit ? COLORS.danger : COLORS.textMedium }]}>
-                            {discoverUsed} / {discoverLimit} this week
+                            {discoverLimit - discoverUsed} / {discoverLimit} left
                         </Text>
                     </View>
                     <Text style={styles.cardDesc}>

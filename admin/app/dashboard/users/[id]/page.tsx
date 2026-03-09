@@ -81,6 +81,26 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
                             <dd className="font-medium">{profile.discover_weekly_limit ?? 1}x / week</dd>
                         </div>
                         <div className="flex justify-between">
+                            <dt className="text-gray-500">AI Discover (this week)</dt>
+                            <dd className="font-medium">
+                                {(() => {
+                                    const limit = profile.discover_weekly_limit ?? 1;
+                                    const weekStart = profile.discover_week_start ?? null;
+                                    const count = profile.discover_week_count ?? 0;
+                                    const today = new Date().toISOString().split('T')[0];
+                                    const isNewWeek = !weekStart ||
+                                        (new Date(today).getTime() - new Date(weekStart).getTime()) >= 7 * 24 * 60 * 60 * 1000;
+                                    const used = isNewWeek ? 0 : count;
+                                    const remaining = limit - used;
+                                    return (
+                                        <span className={remaining <= 0 ? 'text-red-600' : ''}>
+                                            {remaining} / {limit} left
+                                        </span>
+                                    );
+                                })()}
+                            </dd>
+                        </div>
+                        <div className="flex justify-between">
                             <dt className="text-gray-500">Admin Role</dt>
                             <dd className="font-medium">{profile.admin_role ?? 'User'}</dd>
                         </div>
