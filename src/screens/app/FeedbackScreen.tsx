@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/theme';
+import { supabase } from '../../lib/supabase';
 
 export default function FeedbackScreen() {
     const navigation = useNavigation();
@@ -9,19 +10,23 @@ export default function FeedbackScreen() {
     const [sending, setSending] = useState(false);
     const [isSent, setIsSent] = useState(false);
 
-    const handleSend = () => {
+    const handleSend = async () => {
         if (!feedback.trim()) {
             Alert.alert('Empty', 'Please type some feedback before sending.');
             return;
         }
 
         setSending(true);
+        const { error } = await supabase
+            .from('news_messages')
+            .insert({ title: 'User Feedback', content: feedback.trim() });
+        setSending(false);
 
-        // Mock send delay
-        setTimeout(() => {
-            setSending(false);
+        if (error) {
+            Alert.alert('Error', 'Failed to send feedback. Please try again.');
+        } else {
             setIsSent(true);
-        }, 1200);
+        }
     };
 
     if (isSent) {
