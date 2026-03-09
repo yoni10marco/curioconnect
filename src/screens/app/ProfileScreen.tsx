@@ -165,7 +165,11 @@ export default function ProfileScreen() {
                 {/* Profile Header */}
                 <View style={styles.headerCard}>
                     <Text style={styles.username}>{profile?.username ?? 'Learner'}</Text>
-                    <Text style={styles.stats}>⭐ {profile?.total_xp ?? 0} XP   🔥 {profile?.streak_count ?? 0} Day Streak</Text>
+                    <View style={styles.statsRow}>
+                        <Text style={styles.statItem}>⭐ {profile?.total_xp ?? 0} XP</Text>
+                        <Text style={styles.statItem}>🔥 {profile?.streak_count ?? 0} Day Streak</Text>
+                        <Text style={styles.statItem}>🧊 {profile?.streak_freeze_count ?? 0} Freeze</Text>
+                    </View>
                 </View>
 
                 {/* Edit Personal Details */}
@@ -214,27 +218,25 @@ export default function ProfileScreen() {
                     <Text style={styles.cardDesc}>
                         Prompt our AI to read your sentence and map it to core interests that we can teach you about!
                     </Text>
-                    <View style={styles.aiInputRow}>
-                        <TextInput
-                            style={[styles.textInput, { flex: 1, marginBottom: 0 }]}
-                            placeholder="e.g. I like solving mysteries..."
-                            placeholderTextColor={COLORS.textLight}
-                            value={aiPrompt}
-                            onChangeText={setAiPrompt}
-                        />
-                        <TouchableOpacity
-                            style={styles.aiBtn}
-                            onPress={handleAskAI}
-                            disabled={aiLoading || !aiPrompt.trim()}
-                            activeOpacity={0.8}
-                        >
-                            {aiLoading ? (
-                                <ActivityIndicator color={COLORS.white} size="small" />
-                            ) : (
-                                <Text style={styles.aiBtnText}>Discover</Text>
-                            )}
-                        </TouchableOpacity>
-                    </View>
+                    <TextInput
+                        style={styles.textInput}
+                        placeholder="e.g. I like solving mysteries..."
+                        placeholderTextColor={COLORS.textLight}
+                        value={aiPrompt}
+                        onChangeText={setAiPrompt}
+                    />
+                    <TouchableOpacity
+                        style={styles.aiBtn}
+                        onPress={handleAskAI}
+                        disabled={aiLoading || !aiPrompt.trim()}
+                        activeOpacity={0.8}
+                    >
+                        {aiLoading ? (
+                            <ActivityIndicator color={COLORS.white} size="small" />
+                        ) : (
+                            <Text style={styles.aiBtnText}>✨ Discover Interests</Text>
+                        )}
+                    </TouchableOpacity>
                 </View>
 
                 {/* Edit Interests */}
@@ -325,6 +327,8 @@ const styles = StyleSheet.create({
     },
     username: { fontSize: FONTS.sizes.xl, fontWeight: FONTS.weights.bold, color: COLORS.textDark, marginBottom: 4 },
     stats: { fontSize: FONTS.sizes.md, color: COLORS.textMedium, fontWeight: FONTS.weights.medium },
+    statsRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: SPACING.sm, marginTop: 4 },
+    statItem: { fontSize: FONTS.sizes.md, color: COLORS.textMedium, fontWeight: FONTS.weights.medium },
     bioText: { fontSize: FONTS.sizes.sm, color: COLORS.primary, fontWeight: FONTS.weights.bold, marginTop: 4 },
     card: {
         backgroundColor: COLORS.white,
@@ -357,15 +361,9 @@ const styles = StyleSheet.create({
         color: COLORS.textDark,
         marginBottom: SPACING.md,
     },
-    aiInputRow: {
-        flexDirection: 'row',
-        gap: SPACING.sm,
-        alignItems: 'center',
-    },
     aiBtn: {
         backgroundColor: COLORS.primary,
         borderRadius: RADIUS.md,
-        paddingHorizontal: SPACING.lg,
         height: 50,
         justifyContent: 'center',
         alignItems: 'center',
