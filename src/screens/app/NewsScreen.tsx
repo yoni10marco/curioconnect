@@ -17,12 +17,9 @@ export default function NewsScreen() {
     useFocusEffect(
         React.useCallback(() => {
             scrollRef.current?.scrollTo({ y: 0, animated: false });
-        }, [])
+            fetchNews();
+        }, [session])
     );
-
-    useEffect(() => {
-        fetchNews();
-    }, [session]);
 
     const fetchNews = async () => {
         if (!session) return;
