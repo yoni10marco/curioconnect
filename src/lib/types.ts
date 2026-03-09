@@ -10,6 +10,9 @@ export type Profile = {
     job_title?: string | null;
     streak_freeze_count: number;
     admin_role?: 'full_admin' | 'read_only_admin' | null;
+    discover_weekly_limit?: number;
+    discover_week_start?: string | null;
+    discover_week_count?: number;
 };
 
 export type UserInterest = {

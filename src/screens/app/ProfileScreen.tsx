@@ -47,6 +47,8 @@ export default function ProfileScreen() {
     // AI Discovery Fields
     const [aiPrompt, setAiPrompt] = useState('');
     const [aiLoading, setAiLoading] = useState(false);
+    const [discoverUsed, setDiscoverUsed] = useState(0);
+    const [discoverLimit, setDiscoverLimit] = useState(1);
 
     const navigation = useNavigation();
 
@@ -60,15 +62,26 @@ export default function ProfileScreen() {
 
     const fetchInterests = async () => {
         if (!session) return;
-        const { data, error } = await supabase
-            .from('user_interests')
-            .select('interest_name')
-            .eq('user_id', session.user.id);
+        const [{ data: interestData }, { data: profileData }] = await Promise.all([
+            supabase.from('user_interests').select('interest_name').eq('user_id', session.user.id),
+            supabase.from('profiles').select('discover_weekly_limit, discover_week_start, discover_week_count').eq('id', session.user.id).single(),
+        ]);
 
-        if (!error && data) {
-            const loaded = new Set(data.map(r => r.interest_name));
-            setSelected(loaded);
+        if (interestData) {
+            setSelected(new Set(interestData.map(r => r.interest_name)));
         }
+
+        if (profileData) {
+            const limit = profileData.discover_weekly_limit ?? 1;
+            const weekStart = profileData.discover_week_start ?? null;
+            const count = profileData.discover_week_count ?? 0;
+            const today = new Date().toISOString().split('T')[0];
+            const isNewWeek = !weekStart ||
+                (new Date(today).getTime() - new Date(weekStart).getTime()) >= 7 * 24 * 60 * 60 * 1000;
+            setDiscoverLimit(limit);
+            setDiscoverUsed(isNewWeek ? 0 : count);
+        }
+
         setLoading(false);
     };
 
@@ -110,8 +123,9 @@ export default function ProfileScreen() {
                 Alert.alert('No New Interests', 'These interests are already in your profile!');
             }
             setAiPrompt('');
-            await fetchInterests();
         }
+        // Always refresh usage count after any attempt (failed calls also count)
+        await fetchInterests();
         setAiLoading(false);
     };
 
@@ -216,7 +230,12 @@ export default function ProfileScreen() {
 
                 {/* AI Prompt */}
                 <View style={styles.card}>
-                    <Text style={styles.cardTitle}>✨ AI Discover Interests</Text>
+                    <View style={styles.cardHeader}>
+                        <Text style={styles.cardTitle}>✨ AI Discover Interests</Text>
+                        <Text style={[styles.cardDesc, { marginBottom: 0, fontWeight: FONTS.weights.bold, color: discoverUsed >= discoverLimit ? COLORS.danger : COLORS.textMedium }]}>
+                            {discoverUsed} / {discoverLimit} this week
+                        </Text>
+                    </View>
                     <Text style={styles.cardDesc}>
                         Prompt our AI to read your sentence and map it to core interests that we can teach you about!
                     </Text>

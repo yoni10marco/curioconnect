@@ -102,6 +102,12 @@ Deno.serve(async (req: Request) => {
       (existingData ?? []).map((r: { interest_name: string }) => r.interest_name.toLowerCase())
     );
 
+    // Increment weekly count NOW — before calling Gemini — so failures also count
+    await adminSupabase.from("profiles").update({
+      discover_week_count: weekCount + 1,
+      discover_week_start: isNewWeek ? today : weekStart,
+    }).eq("id", user.id);
+
     // Single Gemini call: moderation + interest discovery
     const geminiPrompt = `You are a content moderator and interest analyzer for a learning app for all ages (children, teens, and adults).
 
@@ -151,12 +157,6 @@ If not safe, return: { "safe": false, "interests": [] }`;
     );
 
     if (newInterests.length === 0) {
-      // Still count this as a usage even if nothing new was added
-      await adminSupabase.from("profiles").update({
-        discover_week_count: weekCount + 1,
-        discover_week_start: isNewWeek ? today : weekStart,
-      }).eq("id", user.id);
-
       return new Response(JSON.stringify({ added: [] }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -170,13 +170,8 @@ If not safe, return: { "safe": false, "interests": [] }`;
       interest_name,
     }));
 
-    // Insert interests and increment weekly count in parallel
     const [{ error: insertError }] = await Promise.all([
       adminSupabase.from("user_interests").insert(rows),
-      adminSupabase.from("profiles").update({
-        discover_week_count: weekCount + 1,
-        discover_week_start: isNewWeek ? today : weekStart,
-      }).eq("id", user.id),
     ]);
 
     if (insertError) {
