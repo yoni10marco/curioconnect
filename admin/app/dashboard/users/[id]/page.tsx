@@ -1,10 +1,14 @@
 import Link from 'next/link';
+import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 import { createAdminClient } from '@/lib/supabase-admin';
+import EditUserStatsButton from '@/components/EditUserStatsButton';
 
 export default async function UserDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
     const supabase = createAdminClient();
+    const headersList = await headers();
+    const isFullAdmin = headersList.get('x-admin-role') === 'full_admin';
 
     const [
         { data: profile },
@@ -26,7 +30,17 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
                 <Link href="/dashboard/users" className="text-sm text-gray-500 hover:text-gray-700">← Back to Users</Link>
             </div>
 
-            <h1 className="text-2xl font-bold text-gray-900 mb-8">{profile.username ?? 'Unknown User'}</h1>
+            <div className="flex items-center justify-between mb-8">
+                <h1 className="text-2xl font-bold text-gray-900">{profile.username ?? 'Unknown User'}</h1>
+                {isFullAdmin && (
+                    <EditUserStatsButton
+                        userId={id}
+                        initialXp={profile.total_xp}
+                        initialStreak={profile.streak_count}
+                        initialFreeze={profile.streak_freeze_count}
+                    />
+                )}
+            </div>
 
             <div className="grid grid-cols-2 gap-6 mb-8">
                 {/* Profile info */}
@@ -44,6 +58,10 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
                         <div className="flex justify-between">
                             <dt className="text-gray-500">Streak</dt>
                             <dd className="font-medium">{profile.streak_count} 🔥</dd>
+                        </div>
+                        <div className="flex justify-between">
+                            <dt className="text-gray-500">Freeze Credits</dt>
+                            <dd className="font-medium">{profile.streak_freeze_count} 🧊</dd>
                         </div>
                         <div className="flex justify-between">
                             <dt className="text-gray-500">Difficulty</dt>

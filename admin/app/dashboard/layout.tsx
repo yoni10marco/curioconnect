@@ -45,8 +45,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
                 </nav>
 
                 {/* Footer */}
-                <div className="px-3 py-4 border-t border-gray-800">
+                <div className="px-3 py-4 border-t border-gray-800 space-y-3">
                     <LogoutButton />
+                    <p className="text-center text-xs text-gray-600">v0.1.0</p>
                 </div>
             </aside>
 

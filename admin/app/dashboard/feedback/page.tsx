@@ -19,7 +19,7 @@ export default async function FeedbackPage() {
                 {feedbacks && feedbacks.length > 0 ? (
                     <ul className="divide-y divide-gray-50">
                         {feedbacks.map(fb => {
-                            const profile = fb.profiles as { username: string | null } | null;
+                            const profile = (fb.profiles as unknown as { username: string | null } | null);
                             return (
                                 <li key={fb.id} className="px-6 py-5">
                                     <div className="flex items-start justify-between gap-4">

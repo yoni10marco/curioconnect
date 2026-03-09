@@ -13,7 +13,7 @@ export default async function UsersPage() {
     // Fetch all profiles
     const { data: profiles } = await supabase
         .from('profiles')
-        .select('id, username, total_xp, streak_count, difficulty_level, age, job_title, created_at, admin_role')
+        .select('id, username, total_xp, streak_count, streak_freeze_count, difficulty_level, age, job_title, created_at, admin_role')
         .order('created_at', { ascending: false });
 
     // Fetch auth emails via admin API
@@ -39,6 +39,7 @@ export default async function UsersPage() {
                                 <th className="text-left px-4 py-3 font-semibold text-gray-600">Email</th>
                                 <th className="text-left px-4 py-3 font-semibold text-gray-600">XP</th>
                                 <th className="text-left px-4 py-3 font-semibold text-gray-600">Streak</th>
+                                <th className="text-left px-4 py-3 font-semibold text-gray-600">Freezes</th>
                                 <th className="text-left px-4 py-3 font-semibold text-gray-600">Level</th>
                                 <th className="text-left px-4 py-3 font-semibold text-gray-600">Age</th>
                                 <th className="text-left px-4 py-3 font-semibold text-gray-600">Job</th>
@@ -58,6 +59,7 @@ export default async function UsersPage() {
                                     <td className="px-4 py-3 text-gray-500">{emailMap[profile.id] ?? '—'}</td>
                                     <td className="px-4 py-3 font-medium text-xp">{profile.total_xp} XP</td>
                                     <td className="px-4 py-3">{profile.streak_count} 🔥</td>
+                                    <td className="px-4 py-3">{profile.streak_freeze_count} 🧊</td>
                                     <td className="px-4 py-3 capitalize">{profile.difficulty_level}</td>
                                     <td className="px-4 py-3">{profile.age ?? '—'}</td>
                                     <td className="px-4 py-3 text-gray-500">{profile.job_title ?? '—'}</td>
