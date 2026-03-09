@@ -29,5 +29,9 @@ web-build/
 .vscode/
 .idea/
 
+# Claude Code
+.claude/
+.mcp.json
+
 # TypeScript
 *.tsbuildinfo
