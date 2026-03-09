@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { Profile } from '../lib/types';
+import { cancelAllNotifications } from '../lib/notifications';
 
 interface AuthState {
     session: Session | null;
@@ -60,6 +61,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     },
 
     signOut: async () => {
+        await cancelAllNotifications();
         await supabase.auth.signOut();
         set({ session: null, profile: null });
     },

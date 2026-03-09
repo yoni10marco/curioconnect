@@ -18,6 +18,9 @@ import NewsScreen from '../screens/app/NewsScreen';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store/useAuthStore';
 import { COLORS } from '../lib/theme';
+import { configureNotificationHandler, initializeNotifications } from '../lib/notifications';
+
+configureNotificationHandler();
 
 export type AuthStackParamList = {
     Login: undefined;
@@ -158,6 +161,13 @@ export default function RootNavigator() {
         };
         checkInterests();
     }, [session, profile]);
+
+    useEffect(() => {
+        if (!session || hasInterests !== true) return;
+        const today = new Date().toISOString().split('T')[0];
+        const isCompleted = profile?.last_lesson_date === today;
+        initializeNotifications(isCompleted);
+    }, [session, hasInterests]);
 
     if (!useAuthStore.getState().initialized) {
         return (

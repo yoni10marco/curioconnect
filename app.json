@@ -2,7 +2,7 @@
     "expo": {
         "name": "CurioConnect",
         "slug": "curioconnect",
-        "version": "0.1.1",
+        "version": "0.1.31",
         "orientation": "portrait",
         "icon": "./assets/icon.png",
         "userInterfaceStyle": "light",
@@ -20,8 +20,19 @@
                 "foregroundImage": "./assets/adaptive-icon.png",
                 "backgroundColor": "#FFFFFF"
             },
-            "package": "com.curioconnect.app"
+            "package": "com.curioconnect.app",
+            "permissions": ["RECEIVE_BOOT_COMPLETED"]
         },
+        "plugins": [
+            [
+                "expo-notifications",
+                {
+                    "icon": "./assets/icon.png",
+                    "color": "#58CC02",
+                    "defaultChannel": "default"
+                }
+            ]
+        ],
         "web": {
             "favicon": "./assets/favicon.png"
         },

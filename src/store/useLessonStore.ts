@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { supabase } from '../lib/supabase';
 import { DailyLesson } from '../lib/types';
 import { useAuthStore } from './useAuthStore';
+import { cancelTodayNotifications } from '../lib/notifications';
 
 interface LessonState {
     lesson: DailyLesson | null;
@@ -151,6 +152,9 @@ export const useLessonStore = create<LessonState>((set) => ({
             .from('daily_lessons')
             .update({ is_completed: true })
             .eq('id', lesson.id);
+
+        // Cancel today's notifications — lesson is done
+        await cancelTodayNotifications();
 
         // Calculate streak
         const today = new Date();
