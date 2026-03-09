@@ -8,14 +8,16 @@ type Props = {
     initialXp: number;
     initialStreak: number;
     initialFreeze: number;
+    initialDiscoverLimit: number;
 };
 
-export default function EditUserStatsButton({ userId, initialXp, initialStreak, initialFreeze }: Props) {
+export default function EditUserStatsButton({ userId, initialXp, initialStreak, initialFreeze, initialDiscoverLimit }: Props) {
     const router = useRouter();
     const [open, setOpen] = useState(false);
     const [xp, setXp] = useState(String(initialXp));
     const [streak, setStreak] = useState(String(initialStreak));
     const [freeze, setFreeze] = useState(String(initialFreeze));
+    const [discoverLimit, setDiscoverLimit] = useState(String(initialDiscoverLimit));
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
@@ -29,6 +31,7 @@ export default function EditUserStatsButton({ userId, initialXp, initialStreak, 
                 total_xp: Number(xp),
                 streak_count: Number(streak),
                 streak_freeze_count: Number(freeze),
+                discover_weekly_limit: Number(discoverLimit),
             }),
         });
         setLoading(false);
@@ -62,6 +65,16 @@ export default function EditUserStatsButton({ userId, initialXp, initialStreak, 
                         )}
 
                         <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">AI Discover Limit (per week) ✨</label>
+                                <input
+                                    type="number"
+                                    min={0}
+                                    value={discoverLimit}
+                                    onChange={e => setDiscoverLimit(e.target.value)}
+                                    className="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                                />
+                            </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">XP</label>
                                 <input

@@ -21,6 +21,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     if (typeof body.total_xp === 'number') updates.total_xp = body.total_xp;
     if (typeof body.streak_count === 'number') updates.streak_count = body.streak_count;
     if (typeof body.streak_freeze_count === 'number') updates.streak_freeze_count = body.streak_freeze_count;
+    if (typeof body.discover_weekly_limit === 'number') updates.discover_weekly_limit = Math.max(0, body.discover_weekly_limit);
 
     if (Object.keys(updates).length === 0) {
         return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 });

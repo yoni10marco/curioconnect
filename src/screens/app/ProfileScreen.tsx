@@ -98,6 +98,8 @@ export default function ProfileScreen() {
             Alert.alert('Error', 'Failed to discover interests.');
         } else if (data?.error === 'inappropriate_content') {
             Alert.alert('Inappropriate Content', 'Please keep your description appropriate for all ages.');
+        } else if (data?.error === 'weekly_limit_reached') {
+            Alert.alert('Weekly Limit Reached', `You can only use AI Discover ${data?.limit ?? 1} time(s) per week. Come back next week!`);
         } else if (data?.error === 'interest_limit_reached') {
             Alert.alert('Interest Limit Reached', 'You can have at most 25 interests. Remove some before discovering new ones.');
         } else {

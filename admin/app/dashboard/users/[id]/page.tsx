@@ -38,6 +38,7 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
                         initialXp={profile.total_xp}
                         initialStreak={profile.streak_count}
                         initialFreeze={profile.streak_freeze_count}
+                        initialDiscoverLimit={profile.discover_weekly_limit ?? 1}
                     />
                 )}
             </div>
@@ -74,6 +75,10 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
                         <div className="flex justify-between">
                             <dt className="text-gray-500">Job Title</dt>
                             <dd className="font-medium">{profile.job_title ?? '—'}</dd>
+                        </div>
+                        <div className="flex justify-between">
+                            <dt className="text-gray-500">AI Discover Limit</dt>
+                            <dd className="font-medium">{profile.discover_weekly_limit ?? 1}x / week</dd>
                         </div>
                         <div className="flex justify-between">
                             <dt className="text-gray-500">Admin Role</dt>

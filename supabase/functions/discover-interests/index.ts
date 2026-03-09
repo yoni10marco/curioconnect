@@ -55,14 +55,43 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // Fetch existing interests
-    const { data: existingData } = await adminSupabase
-      .from("user_interests")
-      .select("interest_name")
-      .eq("user_id", user.id);
+    // Fetch profile (for weekly limit) and existing interests in parallel
+    const [{ data: profile }, { data: existingData }] = await Promise.all([
+      adminSupabase
+        .from("profiles")
+        .select("discover_weekly_limit, discover_week_start, discover_week_count")
+        .eq("id", user.id)
+        .single(),
+      adminSupabase
+        .from("user_interests")
+        .select("interest_name")
+        .eq("user_id", user.id),
+    ]);
 
+    // --- Weekly limit check ---
+    const weeklyLimit: number = profile?.discover_weekly_limit ?? 1;
+    const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+    const weekStart: string | null = profile?.discover_week_start ?? null;
+    let weekCount: number = profile?.discover_week_count ?? 0;
+
+    // Determine if we're in a new week (>= 7 days since week_start, or never used)
+    const isNewWeek =
+      !weekStart ||
+      (new Date(today).getTime() - new Date(weekStart).getTime()) >= 7 * 24 * 60 * 60 * 1000;
+
+    if (isNewWeek) {
+      weekCount = 0;
+    }
+
+    if (weekCount >= weeklyLimit) {
+      return new Response(
+        JSON.stringify({ error: "weekly_limit_reached", limit: weeklyLimit }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // --- Interest cap check ---
     const existingCount = existingData?.length ?? 0;
-
     if (existingCount >= MAX_INTERESTS) {
       return new Response(JSON.stringify({ error: "interest_limit_reached", added: [] }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -117,18 +146,22 @@ If not safe, return: { "safe": false, "interests": [] }`;
 
     const discoveredInterests: string[] = parsed.interests ?? [];
 
-    // Filter out already-existing interests
     const newInterests = discoveredInterests.filter(
       (interest) => !existingSet.has(interest.toLowerCase())
     );
 
     if (newInterests.length === 0) {
+      // Still count this as a usage even if nothing new was added
+      await adminSupabase.from("profiles").update({
+        discover_week_count: weekCount + 1,
+        discover_week_start: isNewWeek ? today : weekStart,
+      }).eq("id", user.id);
+
       return new Response(JSON.stringify({ added: [] }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Respect the total cap
     const slotsLeft = MAX_INTERESTS - existingCount;
     const toInsert = newInterests.slice(0, slotsLeft);
 
@@ -137,7 +170,14 @@ If not safe, return: { "safe": false, "interests": [] }`;
       interest_name,
     }));
 
-    const { error: insertError } = await adminSupabase.from("user_interests").insert(rows);
+    // Insert interests and increment weekly count in parallel
+    const [{ error: insertError }] = await Promise.all([
+      adminSupabase.from("user_interests").insert(rows),
+      adminSupabase.from("profiles").update({
+        discover_week_count: weekCount + 1,
+        discover_week_start: isNewWeek ? today : weekStart,
+      }).eq("id", user.id),
+    ]);
 
     if (insertError) {
       throw insertError;
