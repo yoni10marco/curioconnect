@@ -153,6 +153,16 @@ export default function DashboardScreen() {
                             <Text style={styles.statValue}>{profile?.total_xp ?? 0}</Text>
                             <Text style={styles.statLabel}>Total XP</Text>
                         </TouchableOpacity>
+
+                        {/* Divider */}
+                        <View style={styles.statDivider} />
+
+                        {/* Streak Freeze */}
+                        <View style={styles.statCard}>
+                            <Text style={styles.statEmoji}>❄️</Text>
+                            <Text style={styles.statValue}>{profile?.streak_freeze_count ?? 0}</Text>
+                            <Text style={styles.statLabel}>Freezes</Text>
+                        </View>
                     </View>
                 </LinearGradient>
 

@@ -8,6 +8,7 @@ export type Profile = {
     created_at: string;
     age?: number | null;
     job_title?: string | null;
+    streak_freeze_count: number;
 };
 
 export type UserInterest = {

@@ -97,7 +97,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         const yesterdayStr = yesterday.toISOString().split('T')[0];
 
         if (profile.last_lesson_date !== todayStr && profile.last_lesson_date !== yesterdayStr) {
-            await updateProfile({ streak_count: 0 });
+            if ((profile.streak_freeze_count ?? 0) >= 1) {
+                // Consume 1 freeze; update last_lesson_date to today so streak remains valid
+                await updateProfile({
+                    streak_freeze_count: profile.streak_freeze_count - 1,
+                    last_lesson_date: todayStr,
+                });
+            } else {
+                await updateProfile({ streak_count: 0 });
+            }
         }
     },
 }));
