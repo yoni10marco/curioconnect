@@ -104,6 +104,15 @@ Tokens defined in [src/lib/theme.ts](src/lib/theme.ts):
 - Font sizes: xs (11) → title (34); weights: regular → heavy (800)
 - Spacing: xs (4px) → xxl (48px); border radius: sm (8) → full (9999)
 
+### Date Formatting Convention
+**Never use `new Date().toISOString().split('T')[0]` for local date strings** — `toISOString()` outputs UTC, which produces the wrong date for users in UTC+ timezones (e.g. UTC+2 users get yesterday's date before 2 AM).
+
+Always use local date components instead:
+```ts
+const d = new Date();
+const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+```
+
 ### TypeScript
 Strict mode enabled. Shared types/interfaces in [src/lib/types.ts](src/lib/types.ts).
 
