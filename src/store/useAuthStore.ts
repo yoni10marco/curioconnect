@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { Session } from '@supabase/supabase-js';
 import * as WebBrowser from 'expo-web-browser';
 import { makeRedirectUri } from 'expo-auth-session';
+import { Platform } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { Profile } from '../lib/types';
 import { cancelAllNotifications } from '../lib/notifications';
@@ -87,7 +88,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     signInWithGoogle: async (referralCode?) => {
         set({ loading: true });
-        const redirectTo = makeRedirectUri({ scheme: 'curioconnect' });
+        const redirectTo = Platform.OS === 'web'
+            ? (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:19006')
+            : makeRedirectUri({ scheme: 'curioconnect' });
 
         const { data, error } = await supabase.auth.signInWithOAuth({
             provider: 'google',
