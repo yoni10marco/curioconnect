@@ -75,7 +75,7 @@ export default async function UsersPage() {
                                             <span className="text-xs text-gray-400">User</span>
                                         )}
                                     </td>
-                                    <td className="px-4 py-3 text-gray-400">{profile.last_lesson_date ? new Date(profile.last_lesson_date).toLocaleDateString() : '—'}</td>
+                                    <td className="px-4 py-3 text-gray-400">{profile.last_lesson_date ? new Date(profile.last_lesson_date + 'T12:00:00').toLocaleDateString() : '—'}</td>
                                     <td className="px-4 py-3 text-gray-400">{new Date(profile.created_at).toLocaleDateString()}</td>
                                     <td className="px-4 py-3 text-gray-500">
                                         {profile.referred_by_user_id ? (
