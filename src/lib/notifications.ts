@@ -101,6 +101,7 @@ export async function cancelTodayNotifications(): Promise<void> {
 }
 
 export async function cancelAllNotifications(): Promise<void> {
+  if (Platform.OS === 'web') return;
   await Notifications.cancelAllScheduledNotificationsAsync();
   await AsyncStorage.multiRemove([
     STORAGE_KEY_MORNING_ID,
