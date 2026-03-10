@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { Alert } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { DailyLesson } from '../lib/types';
 import { useAuthStore } from './useAuthStore';
@@ -183,5 +184,17 @@ export const useLessonStore = create<LessonState>((set) => ({
         });
 
         set({ lesson: normalizeLesson({ ...lesson, is_completed: true }) });
+
+        // Referral reward: trigger once on the referred user's first lesson completion
+        if (!isReplaying && profile.referred_by_user_id && !profile.referral_reward_given) {
+            const { data } = await supabase.functions.invoke('apply-referral-reward', {
+                headers: { Authorization: `Bearer ${session.access_token}` },
+                body: { user_id: session.user.id },
+            });
+            if (data?.rewarded) {
+                await useAuthStore.getState().fetchProfile(session.user.id);
+                Alert.alert('Referral Bonus! 🎉', 'You and your friend each earned +100 XP and +1 streak freeze!');
+            }
+        }
     },
 }));

@@ -13,6 +13,9 @@ export type Profile = {
     discover_weekly_limit?: number;
     discover_week_start?: string | null;
     discover_week_count?: number;
+    referral_code?: string;
+    referred_by_user_id?: string | null;
+    referral_reward_given?: boolean;
 };
 
 export type UserInterest = {

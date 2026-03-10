@@ -7,7 +7,8 @@ import {
     ScrollView,
     Alert,
     ActivityIndicator,
-    TextInput
+    TextInput,
+    Clipboard,
 } from 'react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/theme';
 import { supabase } from '../../lib/supabase';
@@ -325,6 +326,29 @@ export default function ProfileScreen() {
                     )}
                 </TouchableOpacity>
 
+                {/* Refer a Friend */}
+                {profile?.referral_code && (
+                    <View style={styles.card}>
+                        <Text style={styles.cardTitle}>🎁 Refer a Friend</Text>
+                        <Text style={styles.cardDesc}>
+                            Share your code — when a friend signs up and completes their first lesson, you both get +100 XP and +1 streak freeze!
+                        </Text>
+                        <View style={styles.referralRow}>
+                            <Text style={styles.referralCode}>{profile.referral_code}</Text>
+                            <TouchableOpacity
+                                style={styles.copyBtn}
+                                onPress={() => {
+                                    Clipboard.setString(profile.referral_code!);
+                                    Alert.alert('Copied!', 'Referral code copied to clipboard.');
+                                }}
+                                activeOpacity={0.8}
+                            >
+                                <Text style={styles.copyBtnText}>Copy</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                )}
+
                 {/* Logout */}
                 <TouchableOpacity onPress={() => { signOut(); resetLesson(); }} style={styles.logoutButton}>
                     <Text style={styles.logoutText}>Log Out</Text>
@@ -410,6 +434,33 @@ const styles = StyleSheet.create({
     saveButtonText: { color: COLORS.white, fontSize: FONTS.sizes.lg, fontWeight: FONTS.weights.bold },
     logoutButton: { alignItems: 'center', padding: SPACING.md, marginTop: SPACING.sm },
     logoutText: { color: '#D32F2F', fontSize: FONTS.sizes.md, fontWeight: FONTS.weights.bold },
+    referralRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: COLORS.background,
+        borderRadius: RADIUS.md,
+        paddingHorizontal: SPACING.md,
+        paddingVertical: SPACING.sm,
+        gap: SPACING.sm,
+    },
+    referralCode: {
+        flex: 1,
+        fontSize: FONTS.sizes.lg,
+        fontWeight: FONTS.weights.heavy,
+        color: COLORS.textDark,
+        letterSpacing: 2,
+    },
+    copyBtn: {
+        backgroundColor: COLORS.primary,
+        borderRadius: RADIUS.sm,
+        paddingHorizontal: SPACING.md,
+        paddingVertical: SPACING.sm,
+    },
+    copyBtnText: {
+        color: COLORS.white,
+        fontSize: FONTS.sizes.sm,
+        fontWeight: FONTS.weights.bold,
+    },
     levelContainer: {
         flexDirection: 'row',
         flexWrap: 'wrap',

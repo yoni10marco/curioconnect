@@ -20,6 +20,7 @@ export default function LoginScreen() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [username, setUsername] = useState('');
+    const [referralCode, setReferralCode] = useState('');
     const { signIn, signUp, loading } = useAuthStore();
 
     const friendlyError = (raw: string) => {
@@ -49,7 +50,7 @@ export default function LoginScreen() {
         if (isLogin) {
             ({ error } = await signIn(email.trim(), password));
         } else {
-            ({ error } = await signUp(email.trim(), password, username.trim()));
+            ({ error } = await signUp(email.trim(), password, username.trim(), referralCode.trim() || undefined));
             if (!error) {
                 // Success — if email confirmation is ON, the user needs to check email
                 Alert.alert(
@@ -89,14 +90,24 @@ export default function LoginScreen() {
                         <Text style={styles.cardTitle}>{isLogin ? 'Welcome back!' : 'Create an account'}</Text>
 
                         {!isLogin && (
-                            <TextInput
-                                style={styles.input}
-                                placeholder="Username"
-                                placeholderTextColor={COLORS.textLight}
-                                value={username}
-                                onChangeText={setUsername}
-                                autoCapitalize="none"
-                            />
+                            <>
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder="Username"
+                                    placeholderTextColor={COLORS.textLight}
+                                    value={username}
+                                    onChangeText={setUsername}
+                                    autoCapitalize="none"
+                                />
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder="Referral code (optional)"
+                                    placeholderTextColor={COLORS.textLight}
+                                    value={referralCode}
+                                    onChangeText={setReferralCode}
+                                    autoCapitalize="characters"
+                                />
+                            </>
                         )}
 
                         <TextInput

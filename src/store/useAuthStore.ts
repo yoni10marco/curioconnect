@@ -12,7 +12,7 @@ interface AuthState {
     setSession: (session: Session | null) => void;
     fetchProfile: (userId: string) => Promise<void>;
     signIn: (email: string, password: string) => Promise<{ error: string | null }>;
-    signUp: (email: string, password: string, username: string) => Promise<{ error: string | null }>;
+    signUp: (email: string, password: string, username: string, referralCode?: string) => Promise<{ error: string | null }>;
     signOut: () => Promise<void>;
     updateProfile: (updates: Partial<Profile>) => Promise<void>;
     addXp: (amount: number) => Promise<void>;
@@ -45,7 +45,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         return { error: error?.message ?? null };
     },
 
-    signUp: async (email, password, username) => {
+    signUp: async (email, password, username, referralCode?) => {
         set({ loading: true });
         const { data, error } = await supabase.auth.signUp({
             email,
@@ -55,6 +55,18 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         if (!error && data.user) {
             // Ensure profile exists
             await supabase.from('profiles').upsert({ id: data.user.id, username });
+            // Link referrer if a valid code was provided
+            if (referralCode?.trim()) {
+                const { data: referrerId } = await supabase.rpc('get_user_by_referral_code', {
+                    code: referralCode.trim(),
+                });
+                if (referrerId && referrerId !== data.user.id) {
+                    await supabase
+                        .from('profiles')
+                        .update({ referred_by_user_id: referrerId })
+                        .eq('id', data.user.id);
+                }
+            }
         }
         set({ loading: false });
         return { error: error?.message ?? null };
