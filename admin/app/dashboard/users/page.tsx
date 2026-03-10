@@ -13,12 +13,13 @@ export default async function UsersPage() {
     // Fetch all profiles
     const { data: profiles } = await supabase
         .from('profiles')
-        .select('id, username, total_xp, streak_count, streak_freeze_count, difficulty_level, age, job_title, created_at, admin_role')
+        .select('id, username, total_xp, streak_count, streak_freeze_count, difficulty_level, age, job_title, created_at, admin_role, referred_by_user_id')
         .order('created_at', { ascending: false });
 
     // Fetch auth emails via admin API
     const { data: { users: authUsers } } = await supabase.auth.admin.listUsers({ perPage: 1000 });
     const emailMap = Object.fromEntries(authUsers.map(u => [u.id, u.email]));
+    const usernameMap = Object.fromEntries((profiles ?? []).map(p => [p.id, p.username]));
 
     return (
         <div className="p-8">
@@ -45,6 +46,7 @@ export default async function UsersPage() {
                                 <th className="text-left px-4 py-3 font-semibold text-gray-600">Job</th>
                                 <th className="text-left px-4 py-3 font-semibold text-gray-600">Role</th>
                                 <th className="text-left px-4 py-3 font-semibold text-gray-600">Joined</th>
+                                <th className="text-left px-4 py-3 font-semibold text-gray-600">Invited by</th>
                                 <th className="px-4 py-3"></th>
                             </tr>
                         </thead>
@@ -73,6 +75,13 @@ export default async function UsersPage() {
                                         )}
                                     </td>
                                     <td className="px-4 py-3 text-gray-400">{new Date(profile.created_at).toLocaleDateString()}</td>
+                                    <td className="px-4 py-3 text-gray-500">
+                                        {profile.referred_by_user_id ? (
+                                            <Link href={`/dashboard/users/${profile.referred_by_user_id}`} className="hover:text-primary">
+                                                {usernameMap[profile.referred_by_user_id] ?? '—'}
+                                            </Link>
+                                        ) : '—'}
+                                    </td>
                                     <td className="px-4 py-3">
                                         {isFullAdmin && (
                                             <DeleteUserButton userId={profile.id} username={profile.username ?? 'this user'} />

@@ -329,7 +329,7 @@ export default function ProfileScreen() {
                 {/* Refer a Friend */}
                 {profile?.referral_code && (
                     <View style={styles.card}>
-                        <Text style={styles.cardTitle}>🎁 Refer a Friend</Text>
+                        <Text style={styles.cardTitle}>🎁 Invite a Friend</Text>
                         <Text style={styles.cardDesc}>
                             Share your code — when a friend signs up and completes their first lesson, you both get +100 XP and +1 streak freeze!
                         </Text>
