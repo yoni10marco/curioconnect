@@ -53,20 +53,28 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             options: { data: { username } },
         });
         if (!error && data.user) {
-            // Ensure profile exists
-            await supabase.from('profiles').upsert({ id: data.user.id, username });
-            // Link referrer if a valid code was provided
+            // Look up referrer first (before creating profile so we can do it in one upsert)
+            let referrerId: string | null = null;
             if (referralCode?.trim()) {
-                const { data: referrerId } = await supabase.rpc('get_user_by_referral_code', {
-                    code: referralCode.trim(),
-                });
-                if (referrerId && referrerId !== data.user.id) {
-                    await supabase
-                        .from('profiles')
-                        .update({ referred_by_user_id: referrerId })
-                        .eq('id', data.user.id);
+                try {
+                    const { data: rpcData } = await supabase.rpc('get_user_by_referral_code', {
+                        code: referralCode.trim(),
+                    });
+                    // rpcData is a UUID string or null
+                    if (typeof rpcData === 'string' && rpcData !== data.user.id) {
+                        referrerId = rpcData;
+                    }
+                } catch {
+                    // Referral lookup failed — proceed with signup anyway
                 }
             }
+
+            // Create profile (trigger auto-generates referral_code)
+            await supabase.from('profiles').upsert({
+                id: data.user.id,
+                username,
+                ...(referrerId ? { referred_by_user_id: referrerId } : {}),
+            });
         }
         set({ loading: false });
         return { error: error?.message ?? null };
