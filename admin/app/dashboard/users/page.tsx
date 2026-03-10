@@ -13,7 +13,7 @@ export default async function UsersPage() {
     // Fetch all profiles
     const { data: profiles } = await supabase
         .from('profiles')
-        .select('id, username, total_xp, streak_count, streak_freeze_count, difficulty_level, age, job_title, created_at, admin_role, referred_by_user_id')
+        .select('id, username, total_xp, streak_count, streak_freeze_count, difficulty_level, age, job_title, created_at, admin_role, referred_by_user_id, last_lesson_date')
         .order('created_at', { ascending: false });
 
     // Fetch auth emails via admin API
@@ -45,6 +45,7 @@ export default async function UsersPage() {
                                 <th className="text-left px-4 py-3 font-semibold text-gray-600">Age</th>
                                 <th className="text-left px-4 py-3 font-semibold text-gray-600">Job</th>
                                 <th className="text-left px-4 py-3 font-semibold text-gray-600">Role</th>
+                                <th className="text-left px-4 py-3 font-semibold text-gray-600">Last Lesson</th>
                                 <th className="text-left px-4 py-3 font-semibold text-gray-600">Joined</th>
                                 <th className="text-left px-4 py-3 font-semibold text-gray-600">Invited by</th>
                                 <th className="px-4 py-3"></th>
@@ -74,6 +75,7 @@ export default async function UsersPage() {
                                             <span className="text-xs text-gray-400">User</span>
                                         )}
                                     </td>
+                                    <td className="px-4 py-3 text-gray-400">{profile.last_lesson_date ? new Date(profile.last_lesson_date).toLocaleDateString() : '—'}</td>
                                     <td className="px-4 py-3 text-gray-400">{new Date(profile.created_at).toLocaleDateString()}</td>
                                     <td className="px-4 py-3 text-gray-500">
                                         {profile.referred_by_user_id ? (
