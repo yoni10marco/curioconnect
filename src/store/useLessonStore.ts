@@ -44,7 +44,8 @@ export const useLessonStore = create<LessonState>((set) => ({
         }
         if (!session) return;
 
-        const today = new Date().toISOString().split('T')[0];
+        const _d = new Date();
+        const today = `${_d.getFullYear()}-${String(_d.getMonth() + 1).padStart(2, '0')}-${String(_d.getDate()).padStart(2, '0')}`;
         const { data: existing } = await supabase
             .from('daily_lessons')
             .select('*')
@@ -86,7 +87,8 @@ export const useLessonStore = create<LessonState>((set) => ({
             }
         }
 
-        const today = new Date().toISOString().split('T')[0];
+        const _now = new Date();
+        const today = `${_now.getFullYear()}-${String(_now.getMonth() + 1).padStart(2, '0')}-${String(_now.getDate()).padStart(2, '0')}`;
 
         // 1. Check if lesson already exists for today
         const { data: existing } = await supabase
@@ -159,12 +161,11 @@ export const useLessonStore = create<LessonState>((set) => ({
 
         // Calculate streak
         const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const todayStr = today.toISOString().split('T')[0];
+        const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
         const yesterday = new Date(today);
         yesterday.setDate(yesterday.getDate() - 1);
-        const yesterdayStr = yesterday.toISOString().split('T')[0];
+        const yesterdayStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
 
         let newStreak = 1;
         if (profile.last_lesson_date === yesterdayStr) {

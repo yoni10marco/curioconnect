@@ -111,12 +111,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         if (!profile || !profile.last_lesson_date) return;
 
         const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const todayStr = today.toISOString().split('T')[0];
+        const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
         const yesterday = new Date(today);
         yesterday.setDate(yesterday.getDate() - 1);
-        const yesterdayStr = yesterday.toISOString().split('T')[0];
+        const yesterdayStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
 
         if (profile.last_lesson_date !== todayStr && profile.last_lesson_date !== yesterdayStr) {
             if ((profile.streak_freeze_count ?? 0) >= 1) {
