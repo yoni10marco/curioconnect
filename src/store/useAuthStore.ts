@@ -1,8 +1,12 @@
 import { create } from 'zustand';
 import { Session } from '@supabase/supabase-js';
+import * as WebBrowser from 'expo-web-browser';
+import { makeRedirectUri } from 'expo-auth-session';
 import { supabase } from '../lib/supabase';
 import { Profile } from '../lib/types';
 import { cancelAllNotifications } from '../lib/notifications';
+
+WebBrowser.maybeCompleteAuthSession();
 
 interface AuthState {
     session: Session | null;
@@ -13,6 +17,7 @@ interface AuthState {
     fetchProfile: (userId: string) => Promise<void>;
     signIn: (email: string, password: string) => Promise<{ error: string | null }>;
     signUp: (email: string, password: string, username: string, referralCode?: string) => Promise<{ error: string | null }>;
+    signInWithGoogle: (referralCode?: string) => Promise<{ error: string | null }>;
     signOut: () => Promise<void>;
     updateProfile: (updates: Partial<Profile>) => Promise<void>;
     addXp: (amount: number) => Promise<void>;
@@ -78,6 +83,85 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         }
         set({ loading: false });
         return { error: error?.message ?? null };
+    },
+
+    signInWithGoogle: async (referralCode?) => {
+        set({ loading: true });
+        const redirectTo = makeRedirectUri({ scheme: 'curioconnect' });
+
+        const { data, error } = await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: { redirectTo, skipBrowserRedirect: true },
+        });
+        if (error || !data.url) {
+            set({ loading: false });
+            return { error: error?.message ?? 'Failed to initiate Google sign-in' };
+        }
+
+        const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+        if (result.type !== 'success') {
+            set({ loading: false });
+            return { error: null }; // user cancelled — not an error
+        }
+
+        const params = new URLSearchParams(result.url.split('#')[1] ?? '');
+        const accessToken = params.get('access_token');
+        const refreshToken = params.get('refresh_token');
+        if (!accessToken || !refreshToken) {
+            set({ loading: false });
+            return { error: 'Authentication failed. Please try again.' };
+        }
+
+        const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+        });
+        if (sessionError) {
+            set({ loading: false });
+            return { error: sessionError.message };
+        }
+
+        const userId = sessionData.session?.user.id;
+        if (!userId) {
+            set({ loading: false });
+            return { error: 'No user returned from Google.' };
+        }
+
+        // Check if this is a new user (no profile yet)
+        const { data: existingProfile } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('id', userId)
+            .single();
+
+        if (!existingProfile) {
+            const meta = sessionData.session?.user.user_metadata ?? {};
+            const googleName: string =
+                meta.full_name ?? meta.name ?? sessionData.session?.user.email?.split('@')[0] ?? 'user';
+
+            let referrerId: string | null = null;
+            if (referralCode?.trim()) {
+                try {
+                    const { data: rpcData } = await supabase.rpc('get_user_by_referral_code', {
+                        code: referralCode.trim(),
+                    });
+                    if (typeof rpcData === 'string' && rpcData !== userId) {
+                        referrerId = rpcData;
+                    }
+                } catch {
+                    // Referral lookup failed — proceed anyway
+                }
+            }
+
+            await supabase.from('profiles').upsert({
+                id: userId,
+                username: googleName,
+                ...(referrerId ? { referred_by_user_id: referrerId } : {}),
+            });
+        }
+
+        set({ loading: false });
+        return { error: null };
     },
 
     signOut: async () => {

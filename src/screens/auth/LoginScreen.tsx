@@ -12,6 +12,7 @@ import {
     ScrollView,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { AntDesign } from '@expo/vector-icons';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/theme';
 import { useAuthStore } from '../../store/useAuthStore';
 
@@ -21,7 +22,7 @@ export default function LoginScreen() {
     const [password, setPassword] = useState('');
     const [username, setUsername] = useState('');
     const [referralCode, setReferralCode] = useState('');
-    const { signIn, signUp, loading } = useAuthStore();
+    const { signIn, signUp, signInWithGoogle, loading } = useAuthStore();
 
     const friendlyError = (raw: string) => {
         if (raw.includes('Invalid login credentials')) return 'Wrong email or password. Please try again.';
@@ -30,6 +31,11 @@ export default function LoginScreen() {
         if (raw.includes('already registered')) return 'This email is already registered. Try logging in instead.';
         if (raw.includes('Password should be')) return 'Password must be at least 6 characters.';
         return raw;
+    };
+
+    const handleGoogleSignIn = async () => {
+        const { error } = await signInWithGoogle(referralCode.trim() || undefined);
+        if (error) Alert.alert('Google Sign-In Failed', error);
     };
 
     const handleSubmit = async () => {
@@ -88,6 +94,30 @@ export default function LoginScreen() {
                     {/* Card */}
                     <View style={styles.card}>
                         <Text style={styles.cardTitle}>{isLogin ? 'Welcome back!' : 'Create an account'}</Text>
+
+                        {/* Google Sign-In */}
+                        <TouchableOpacity
+                            style={styles.googleButton}
+                            onPress={handleGoogleSignIn}
+                            disabled={loading}
+                            activeOpacity={0.85}
+                        >
+                            {loading ? (
+                                <ActivityIndicator color="#444" />
+                            ) : (
+                                <>
+                                    <AntDesign name="google" size={18} color="#EA4335" style={styles.googleIcon} />
+                                    <Text style={styles.googleButtonText}>Continue with Google</Text>
+                                </>
+                            )}
+                        </TouchableOpacity>
+
+                        {/* Divider */}
+                        <View style={styles.dividerRow}>
+                            <View style={styles.dividerLine} />
+                            <Text style={styles.dividerText}>or</Text>
+                            <View style={styles.dividerLine} />
+                        </View>
 
                         {!isLogin && (
                             <>
@@ -240,5 +270,39 @@ const styles = StyleSheet.create({
     toggleLink: {
         color: COLORS.primary,
         fontWeight: FONTS.weights.bold,
+    },
+    googleButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 1.5,
+        borderColor: '#DADCE0',
+        borderRadius: RADIUS.md,
+        padding: SPACING.md,
+        marginBottom: SPACING.sm,
+        backgroundColor: COLORS.white,
+    },
+    googleIcon: {
+        marginRight: SPACING.sm,
+    },
+    googleButtonText: {
+        fontSize: FONTS.sizes.md,
+        fontWeight: FONTS.weights.semibold,
+        color: '#3C4043',
+    },
+    dividerRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginVertical: SPACING.sm,
+    },
+    dividerLine: {
+        flex: 1,
+        height: 1,
+        backgroundColor: COLORS.border,
+    },
+    dividerText: {
+        fontSize: FONTS.sizes.sm,
+        color: COLORS.textLight,
+        marginHorizontal: SPACING.sm,
     },
 });
