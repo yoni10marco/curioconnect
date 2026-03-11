@@ -67,6 +67,12 @@ Implemented in [src/lib/notifications.ts](src/lib/notifications.ts):
 
 **Client**: [src/lib/supabase.ts](src/lib/supabase.ts) — initialized with AsyncStorage for session persistence. Credentials come from `Constants.expoConfig.extra` (set in [app.json](app.json)).
 
+**Auth Configuration (Supabase Dashboard):**
+- Google OAuth enabled (Web application client — Supabase handles the callback)
+- **Automatic account linking is OFF** — email/password and Google accounts with the same email are treated as separate users; do NOT suggest enabling it
+- Redirect URLs: `curioconnect://` (mobile), `http://localhost:19006` (web dev)
+- `signInWithGoogle` uses `window.location.origin` as redirect on web, `makeRedirectUri({ scheme: 'curioconnect' })` on native
+
 **Edge Functions** (in `supabase/functions/`):
 - `generate-lesson` — calls Gemini 2.5 Flash (`GEMINI_API_KEY`), requires `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY`
 - `get-leaderboard` — fetches top 100 users sorted by XP or streak using service role key; takes `activeTab` param (`'xp'` | `'streak_count'`)
