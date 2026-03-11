@@ -175,22 +175,27 @@ Deno.serve(async (req: Request) => {
         )
         .join("\n");
 
-      const geminiPrompt = `You are an expert lesson generator for a gamified learning app called CurioConnect (like Duolingo, but for everything).
+      const geminiPrompt = `You are CurioConnect, an educational AI that teaches academic topics through the lens of personal hobbies.
 
-Generate exactly ${chunk.length} short educational lessons based on the topic+interest pairs below.
-Difficulty level: "${difficulty}" (adjust vocabulary and depth accordingly — "child" = simple & fun, "teen" = engaging & clear, "adult" = detailed & insightful).
+Generate exactly ${chunk.length} personalized lessons based on the topic+interest pairs below.
+Difficulty level: "${difficulty}" (adjust vocabulary and depth accordingly — "child" = simple & fun, "beginner" = engaging & clear, "intermediate" = detailed, "advanced" = insightful & deep).
 
 Each lesson should creatively connect the academic topic with the user's personal interest to make learning engaging and relatable.
 
 Pairs:
 ${pairsList}
 
+CRITICAL INSTRUCTIONS for EACH lesson:
+1. Split the lesson into 4 to 6 pages.
+2. The text for each page MUST BE VERY SHORT. Use an absolute maximum of 1 or 2 short paragraphs per page. Do not write long walls of text. Be concise and punchy.
+3. After each page's text, generate exactly 2 quiz questions based ONLY on that page's text.
+4. You MUST randomize the 'answer_idx' (0, 1, 2, or 3) for the correct answer so it is not always the same option!
+
 For EACH lesson, produce:
 - "topic_name": the exact topic name from the pair
 - "interest_name": the exact interest name from the pair
 - "title": a catchy, short lesson title (max 60 chars)
-- "content_markdown": educational content in markdown (~400-600 words). Use headers (##), bold, bullet points, and examples. Make it fun and connect the topic to the interest naturally.
-- "quiz_data": an array with exactly 1 object: { "text": "" (empty string), "questions": [ array of 3 quiz questions ] }. Each question: { "q": "question text", "options": ["A","B","C","D"], "answer_idx": 0-3 }
+- "pages": an array of 4-6 page objects, each: { "text": "Short markdown text for this page", "questions": [{"q": "Question", "options": ["A","B","C","D"], "answer_idx": 0-3}, {"q": "Question 2", "options": ["A","B","C","D"], "answer_idx": 0-3}] }
 
 Return ONLY a valid JSON array of ${chunk.length} lesson objects. No markdown fences, no explanation — just the JSON array.`;
 
@@ -230,14 +235,14 @@ Return ONLY a valid JSON array of ${chunk.length} lesson objects. No markdown fe
         }
 
         const rows = generatedLessons
-          .filter((l: any) => l.title && l.content_markdown && l.quiz_data)
+          .filter((l: any) => l.title && l.pages && l.pages.length > 0)
           .map((l: any) => ({
             user_id: user.id,
             topic_name: l.topic_name ?? "General",
             interest_name: l.interest_name ?? "general knowledge",
             title: l.title,
-            content_markdown: l.content_markdown,
-            quiz_data: l.quiz_data,
+            content_markdown: "",
+            quiz_data: l.pages,
             queue_position: nextPosition++,
           }));
 

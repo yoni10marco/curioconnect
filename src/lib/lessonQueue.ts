@@ -44,27 +44,15 @@ export async function consumeFromQueue(
 
     const queuedLesson = queued as QueuedLesson;
 
-    // Build pages array matching the format LessonReader expects:
-    // quiz_data from queue is [{text: "", questions: [...]}] — combine with content_markdown
-    let quizData = queuedLesson.quiz_data;
-    if (typeof quizData === 'string') {
-        try { quizData = JSON.parse(quizData); } catch { quizData = []; }
-    }
-    // If quiz_data items have empty text, split content_markdown into pages with questions
-    const quizArray = Array.isArray(quizData) ? quizData : [quizData];
-    const pages = quizArray.map((q: any) => ({
-        text: q.text || queuedLesson.content_markdown || '',
-        questions: q.questions ?? [],
-    }));
-
     // Insert into daily_lessons with today's date
+    // quiz_data is already in pages format [{text, questions}, ...] from batch generation
     const { data: inserted, error: insertErr } = await supabase
         .from('daily_lessons')
         .insert({
             user_id: userId,
             title: queuedLesson.title,
             content_markdown: queuedLesson.content_markdown,
-            quiz_data: pages,
+            quiz_data: queuedLesson.quiz_data,
             interest_name: queuedLesson.interest_name,
             is_completed: false,
             created_at: todayStr,
