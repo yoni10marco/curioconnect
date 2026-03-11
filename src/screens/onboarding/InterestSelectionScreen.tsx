@@ -37,7 +37,7 @@ export default function InterestSelectionScreen() {
     const [ageInput, setAgeInput] = useState('');
     const [jobInput, setJobInput] = useState('');
     const [difficulty, setDifficulty] = useState('beginner');
-    const { session, profile, fetchProfile, updateProfile } = useAuthStore();
+    const { session, profile, fetchProfile, updateProfile, signOut } = useAuthStore();
 
     useEffect(() => {
         if (profile?.username) setUsernameInput(profile.username);
@@ -134,6 +134,9 @@ export default function InterestSelectionScreen() {
             >
                 {/* Hero */}
                 <View style={styles.hero}>
+                    <TouchableOpacity style={styles.backButton} onPress={signOut} activeOpacity={0.7}>
+                        <Text style={styles.backButtonText}>← Back</Text>
+                    </TouchableOpacity>
                     <Text style={styles.emoji}>🌟</Text>
                     <Text style={styles.title}>Set up your profile</Text>
                     <Text style={styles.subtitle}>
@@ -270,6 +273,18 @@ const styles = StyleSheet.create({
         paddingBottom: SPACING.xl,
         paddingHorizontal: SPACING.lg,
         alignItems: 'center',
+    },
+    backButton: {
+        position: 'absolute',
+        top: 50,
+        left: SPACING.md,
+        paddingVertical: SPACING.xs,
+        paddingHorizontal: SPACING.sm,
+    },
+    backButtonText: {
+        color: 'rgba(255,255,255,0.9)',
+        fontSize: FONTS.sizes.md,
+        fontWeight: FONTS.weights.semiBold,
     },
     emoji: { fontSize: 48, marginBottom: SPACING.sm },
     title: {
