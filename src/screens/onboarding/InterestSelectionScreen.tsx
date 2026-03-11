@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -30,10 +30,16 @@ const LEVELS = [
 export default function InterestSelectionScreen() {
     const [selected, setSelected] = useState<Set<string>>(new Set());
     const [saving, setSaving] = useState(false);
+    const [usernameInput, setUsernameInput] = useState('');
+    const [referralInput, setReferralInput] = useState('');
     const [ageInput, setAgeInput] = useState('');
     const [jobInput, setJobInput] = useState('');
     const [difficulty, setDifficulty] = useState('beginner');
-    const { session, fetchProfile, updateProfile } = useAuthStore();
+    const { session, profile, fetchProfile, updateProfile } = useAuthStore();
+
+    useEffect(() => {
+        if (profile?.username) setUsernameInput(profile.username);
+    }, [profile?.username]);
 
     const toggle = (interest: string) => {
         setSelected((prev) => {
@@ -45,6 +51,10 @@ export default function InterestSelectionScreen() {
     };
 
     const handleContinue = async () => {
+        if (!usernameInput.trim()) {
+            Alert.alert('Username required', 'Please enter a username to continue.');
+            return;
+        }
         if (selected.size < 2) {
             Alert.alert('Choose more!', 'Please select at least 2 interests to personalize your lessons.');
             return;
@@ -52,11 +62,22 @@ export default function InterestSelectionScreen() {
         if (!session) return;
 
         setSaving(true);
+
+        // Apply referral code if provided and not already applied
+        if (referralInput.trim() && !profile?.referred_by_user_id) {
+            try {
+                const { data: rpcData } = await supabase.rpc('get_user_by_referral_code', { code: referralInput.trim() });
+                if (typeof rpcData === 'string' && rpcData !== session.user.id) {
+                    await supabase.from('profiles').update({ referred_by_user_id: rpcData }).eq('id', session.user.id);
+                }
+            } catch { }
+        }
+
+        // Save interests
         const rows = Array.from(selected).map((name) => ({
             user_id: session.user.id,
             interest_name: name,
         }));
-
         const { error } = await supabase.from('user_interests').insert(rows);
         if (error) {
             Alert.alert('Error', 'Failed to save interests. Please try again.');
@@ -64,9 +85,10 @@ export default function InterestSelectionScreen() {
             return;
         }
 
-        // Save age, job, and difficulty level
+        // Save profile fields
         const parsedAge = parseInt(ageInput, 10);
         await updateProfile({
+            username: usernameInput.trim(),
             difficulty_level: difficulty,
             ...(ageInput && !isNaN(parsedAge) && { age: parsedAge }),
             ...(jobInput.trim() && { job_title: jobInput.trim() }),
@@ -77,17 +99,56 @@ export default function InterestSelectionScreen() {
         // Navigation happens automatically via root navigator checking profile interests
     };
 
+    const canContinue = selected.size >= 2 && usernameInput.trim().length > 0;
+
     return (
         <View style={styles.container}>
-            <View style={styles.header}>
-                <Text style={styles.emoji}>🌟</Text>
-                <Text style={styles.title}>What are you into?</Text>
-                <Text style={styles.subtitle}>
-                    We'll connect your passions to fascinating academic topics daily.
-                </Text>
+            <ScrollView
+                contentContainerStyle={styles.scrollContent}
+                showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+            >
+                {/* Hero */}
+                <View style={styles.hero}>
+                    <Text style={styles.emoji}>🌟</Text>
+                    <Text style={styles.title}>Set up your profile</Text>
+                    <Text style={styles.subtitle}>
+                        Tell us about yourself so we can personalize your learning experience.
+                    </Text>
+                </View>
 
-                <View style={styles.inputCard}>
-                    <Text style={styles.sectionHeading}>I am a...</Text>
+                {/* Username */}
+                <View style={styles.card}>
+                    <Text style={styles.cardTitle}>👤 Username</Text>
+                    <TextInput
+                        style={styles.textInput}
+                        placeholder="Choose a username"
+                        placeholderTextColor={COLORS.textLight}
+                        value={usernameInput}
+                        onChangeText={setUsernameInput}
+                        autoCapitalize="none"
+                    />
+                </View>
+
+                {/* Referral code */}
+                {!profile?.referred_by_user_id && (
+                    <View style={styles.card}>
+                        <Text style={styles.cardTitle}>🎁 Invite Code</Text>
+                        <Text style={styles.cardDesc}>Got an invite code from a friend? Enter it here.</Text>
+                        <TextInput
+                            style={styles.textInput}
+                            placeholder="Enter invite code (optional)"
+                            placeholderTextColor={COLORS.textLight}
+                            value={referralInput}
+                            onChangeText={setReferralInput}
+                            autoCapitalize="characters"
+                        />
+                    </View>
+                )}
+
+                {/* Level */}
+                <View style={styles.card}>
+                    <Text style={styles.cardTitle}>📚 I am a...</Text>
                     <View style={styles.levelContainer}>
                         {LEVELS.map(l => (
                             <TouchableOpacity
@@ -103,52 +164,60 @@ export default function InterestSelectionScreen() {
                     </View>
                 </View>
 
-                <View style={[styles.inputCard, { marginBottom: SPACING.md }]}>
-                    <Text style={styles.sectionHeading}>Tell us about yourself (Optional)</Text>
+                {/* About you */}
+                <View style={styles.card}>
+                    <Text style={styles.cardTitle}>🙋 About You <Text style={styles.optional}>(Optional)</Text></Text>
                     <TextInput
                         style={styles.textInput}
                         placeholder="Age (e.g., 25)"
-                        placeholderTextColor="rgba(255,255,255,0.6)"
+                        placeholderTextColor={COLORS.textLight}
                         keyboardType="numeric"
                         value={ageInput}
                         onChangeText={setAgeInput}
                     />
                     <TextInput
-                        style={styles.textInput}
+                        style={[styles.textInput, { marginBottom: 0 }]}
                         placeholder="What do you do? (e.g., Student, Engineer)"
-                        placeholderTextColor="rgba(255,255,255,0.6)"
+                        placeholderTextColor={COLORS.textLight}
                         value={jobInput}
                         onChangeText={setJobInput}
                     />
                 </View>
 
-                <Text style={styles.minText}>Pick at least 2 interests</Text>
-            </View>
+                {/* Interests */}
+                <View style={styles.card}>
+                    <Text style={styles.cardTitle}>❤️ Your Interests</Text>
+                    <Text style={styles.cardDesc}>Pick at least 2 to personalize your lessons.</Text>
+                    <View style={styles.grid}>
+                        {ALL_INTERESTS.map((interest) => {
+                            const isSelected = selected.has(interest);
+                            return (
+                                <TouchableOpacity
+                                    key={interest}
+                                    style={[styles.chip, isSelected && styles.chipSelected]}
+                                    onPress={() => toggle(interest)}
+                                    activeOpacity={0.8}
+                                >
+                                    <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>
+                                        {interest}
+                                    </Text>
+                                </TouchableOpacity>
+                            );
+                        })}
+                    </View>
+                </View>
 
-            <ScrollView contentContainerStyle={styles.grid} showsVerticalScrollIndicator={false}>
-                {ALL_INTERESTS.map((interest) => {
-                    const isSelected = selected.has(interest);
-                    return (
-                        <TouchableOpacity
-                            key={interest}
-                            style={[styles.chip, isSelected && styles.chipSelected]}
-                            onPress={() => toggle(interest)}
-                            activeOpacity={0.8}
-                        >
-                            <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>
-                                {interest}
-                            </Text>
-                        </TouchableOpacity>
-                    );
-                })}
+                {/* Bottom padding for fixed footer */}
+                <View style={{ height: 100 }} />
             </ScrollView>
 
+            {/* Fixed footer */}
             <View style={styles.footer}>
                 <Text style={styles.countText}>{selected.size} selected</Text>
                 <TouchableOpacity
-                    style={[styles.continueButton, selected.size < 2 && styles.continueButtonDisabled]}
+                    style={[styles.continueButton, !canContinue && styles.continueButtonDisabled]}
                     onPress={handleContinue}
-                    disabled={saving || selected.size < 2}
+                    disabled={saving || !canContinue}
                     activeOpacity={0.85}
                 >
                     {saving ? (
@@ -167,7 +236,11 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: COLORS.background,
     },
-    header: {
+    scrollContent: {
+        gap: SPACING.md,
+        paddingBottom: SPACING.lg,
+    },
+    hero: {
         backgroundColor: COLORS.primary,
         paddingTop: 60,
         paddingBottom: SPACING.xl,
@@ -185,35 +258,46 @@ const styles = StyleSheet.create({
         fontSize: FONTS.sizes.md,
         color: 'rgba(255,255,255,0.85)',
         marginTop: SPACING.sm,
-        marginBottom: SPACING.lg,
         textAlign: 'center',
         lineHeight: 22,
     },
-    inputCard: {
-        width: '100%',
-        backgroundColor: 'rgba(255,255,255,0.1)',
-        borderRadius: RADIUS.lg,
-        padding: SPACING.md,
-        marginBottom: SPACING.xl,
+    card: {
+        backgroundColor: COLORS.white,
+        borderRadius: RADIUS.xl,
+        padding: SPACING.lg,
+        marginHorizontal: SPACING.md,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 6,
+        elevation: 2,
     },
-    sectionHeading: {
-        color: COLORS.white,
-        fontSize: FONTS.sizes.sm,
+    cardTitle: {
+        fontSize: FONTS.sizes.lg,
         fontWeight: FONTS.weights.bold,
+        color: COLORS.textDark,
         marginBottom: SPACING.sm,
+    },
+    cardDesc: {
+        fontSize: FONTS.sizes.sm,
+        color: COLORS.textMedium,
+        marginBottom: SPACING.md,
+        lineHeight: 20,
+    },
+    optional: {
+        fontSize: FONTS.sizes.sm,
+        fontWeight: FONTS.weights.regular,
+        color: COLORS.textLight,
     },
     textInput: {
-        backgroundColor: 'rgba(255,255,255,0.15)',
+        backgroundColor: COLORS.background,
+        borderWidth: 1,
+        borderColor: COLORS.border,
         borderRadius: RADIUS.md,
         padding: SPACING.md,
-        color: COLORS.white,
+        color: COLORS.textDark,
         fontSize: FONTS.sizes.md,
         marginBottom: SPACING.sm,
-    },
-    minText: {
-        fontWeight: FONTS.weights.bold,
-        color: COLORS.accent,
-        marginBottom: -SPACING.md,
     },
     levelContainer: {
         flexDirection: 'row',
@@ -223,7 +307,7 @@ const styles = StyleSheet.create({
     levelBtn: {
         flex: 1,
         minWidth: '45%',
-        backgroundColor: 'rgba(255,255,255,0.15)',
+        backgroundColor: COLORS.background,
         borderRadius: RADIUS.md,
         padding: SPACING.md,
         alignItems: 'center',
@@ -232,11 +316,11 @@ const styles = StyleSheet.create({
     },
     levelBtnActive: {
         backgroundColor: COLORS.white,
-        borderColor: COLORS.accent,
+        borderColor: COLORS.primary,
     },
     levelLabel: {
         fontSize: FONTS.sizes.md,
-        color: COLORS.white,
+        color: COLORS.textDark,
         fontWeight: FONTS.weights.bold,
         marginBottom: 2,
     },
@@ -245,7 +329,7 @@ const styles = StyleSheet.create({
     },
     levelDesc: {
         fontSize: FONTS.sizes.xs,
-        color: 'rgba(255,255,255,0.7)',
+        color: COLORS.textLight,
     },
     levelDescActive: {
         color: COLORS.textMedium,
@@ -253,10 +337,7 @@ const styles = StyleSheet.create({
     grid: {
         flexDirection: 'row',
         flexWrap: 'wrap',
-        padding: SPACING.md,
-        paddingBottom: 120,
         gap: SPACING.sm,
-        justifyContent: 'center',
     },
     chip: {
         borderWidth: 2,

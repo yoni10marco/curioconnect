@@ -32,6 +32,7 @@ export default function ProfileScreen() {
     const [saving, setSaving] = useState(false);
 
     // Editable Profile Fields
+    const [usernameInput, setUsernameInput] = useState(profile?.username ?? '');
     const [ageInput, setAgeInput] = useState(profile?.age?.toString() ?? '');
     const [jobInput, setJobInput] = useState(profile?.job_title ?? '');
 
@@ -39,6 +40,7 @@ export default function ProfileScreen() {
 
     useEffect(() => {
         if (profile) {
+            setUsernameInput(profile.username ?? '');
             setDifficulty(profile.difficulty_level ?? 'beginner');
             setAgeInput(profile.age?.toString() ?? '');
             setJobInput(profile.job_title ?? '');
@@ -131,6 +133,10 @@ export default function ProfileScreen() {
     };
 
     const handleSave = async () => {
+        if (!usernameInput.trim()) {
+            Alert.alert('Username required', 'Please enter a username.');
+            return;
+        }
         if (selected.size < 2) {
             Alert.alert('Choose more!', 'Please select at least 2 interests.');
             return;
@@ -161,6 +167,7 @@ export default function ProfileScreen() {
         // Update profile specifics
         const parsedAge = parseInt(ageInput, 10);
         await updateProfile({
+            username: usernameInput.trim(),
             difficulty_level: difficulty,
             age: !isNaN(parsedAge) ? parsedAge : null,
             job_title: jobInput.trim() || null,
@@ -192,6 +199,14 @@ export default function ProfileScreen() {
                 {/* Edit Personal Details */}
                 <View style={styles.card}>
                     <Text style={styles.cardTitle}>Personal Details</Text>
+                    <TextInput
+                        style={styles.textInput}
+                        placeholder="Username"
+                        placeholderTextColor={COLORS.textLight}
+                        value={usernameInput}
+                        onChangeText={setUsernameInput}
+                        autoCapitalize="none"
+                    />
                     <TextInput
                         style={styles.textInput}
                         placeholder="Age"
