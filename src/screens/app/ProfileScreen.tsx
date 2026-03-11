@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     View,
     Text,
@@ -38,10 +38,15 @@ export default function ProfileScreen() {
 
     const [difficulty, setDifficulty] = useState(profile?.difficulty_level ?? 'beginner');
 
+    // Track initial state for diff computation on save
+    const initialInterestsRef = useRef<Set<string>>(new Set());
+    const initialDifficultyRef = useRef<string>(profile?.difficulty_level ?? 'beginner');
+
     useEffect(() => {
         if (profile) {
             setUsernameInput(profile.username ?? '');
             setDifficulty(profile.difficulty_level ?? 'beginner');
+            initialDifficultyRef.current = profile.difficulty_level ?? 'beginner';
             setAgeInput(profile.age?.toString() ?? '');
             setJobInput(profile.job_title ?? '');
         }
@@ -71,7 +76,9 @@ export default function ProfileScreen() {
         ]);
 
         if (interestData) {
-            setSelected(new Set(interestData.map(r => r.interest_name)));
+            const interestSet = new Set(interestData.map(r => r.interest_name));
+            setSelected(interestSet);
+            initialInterestsRef.current = new Set(interestSet);
         }
 
         if (profileData) {
@@ -122,6 +129,20 @@ export default function ProfileScreen() {
             const added: string[] = data?.added ?? [];
             if (added.length > 0) {
                 Alert.alert('Interests Added! ✨', `Added: ${added.join(', ')}`);
+
+                // Fire-and-forget: sync queue with newly discovered interests
+                if (session) {
+                    supabase.functions.invoke('sync-lesson-queue', {
+                        headers: { Authorization: `Bearer ${session.access_token}` },
+                        body: {
+                            removed_interests: [],
+                            added_interests: added,
+                            all_interests: [...Array.from(selected), ...added],
+                            difficulty_level: profile?.difficulty_level ?? 'adult',
+                            difficulty_changed: false,
+                        },
+                    });
+                }
             } else {
                 Alert.alert('No New Interests', 'These interests are already in your profile!');
             }
@@ -142,6 +163,22 @@ export default function ProfileScreen() {
             return;
         }
         if (!session) return;
+
+        // Check difficulty change weekly limit
+        const difficultyChanged = difficulty !== initialDifficultyRef.current;
+        if (difficultyChanged && profile?.last_difficulty_change) {
+            const lastChange = new Date(profile.last_difficulty_change);
+            const now = new Date();
+            const daysSince = Math.floor((now.getTime() - lastChange.getTime()) / (1000 * 60 * 60 * 24));
+            if (daysSince < 7) {
+                const nextDate = new Date(lastChange);
+                nextDate.setDate(nextDate.getDate() + 7);
+                const nextStr = `${nextDate.getFullYear()}-${String(nextDate.getMonth() + 1).padStart(2, '0')}-${String(nextDate.getDate()).padStart(2, '0')}`;
+                Alert.alert('Difficulty Locked', `You can change difficulty again on ${nextStr}.`);
+                setDifficulty(initialDifficultyRef.current);
+                return;
+            }
+        }
 
         setSaving(true);
         // Delete existing interests
@@ -164,14 +201,41 @@ export default function ProfileScreen() {
 
         const { error: insertError } = await supabase.from('user_interests').insert(rows);
 
-        // Update profile specifics
+        // Update profile specifics (include last_difficulty_change if changed)
         const parsedAge = parseInt(ageInput, 10);
+        const d = new Date();
+        const todayStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
         await updateProfile({
             username: usernameInput.trim(),
             difficulty_level: difficulty,
             age: !isNaN(parsedAge) ? parsedAge : null,
             job_title: jobInput.trim() || null,
+            ...(difficultyChanged && { last_difficulty_change: todayStr }),
         });
+
+        // Sync lesson queue: compute interest diff and trigger sync
+        const oldInterests = initialInterestsRef.current;
+        const removedInterests = [...oldInterests].filter(i => !selected.has(i));
+        const addedInterests = [...selected].filter(i => !oldInterests.has(i));
+
+        if (difficultyChanged || removedInterests.length > 0 || addedInterests.length > 0) {
+            // Fire-and-forget sync
+            supabase.functions.invoke('sync-lesson-queue', {
+                headers: { Authorization: `Bearer ${session.access_token}` },
+                body: {
+                    removed_interests: removedInterests,
+                    added_interests: addedInterests,
+                    all_interests: Array.from(selected),
+                    difficulty_level: difficulty,
+                    difficulty_changed: difficultyChanged,
+                },
+            });
+        }
+
+        // Update refs for next save
+        initialInterestsRef.current = new Set(selected);
+        initialDifficultyRef.current = difficulty;
 
         if (insertError) {
             Alert.alert('Error', 'Failed to save new interests.');

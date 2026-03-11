@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { DailyLesson } from '../lib/types';
 import { useAuthStore } from './useAuthStore';
 import { cancelTodayNotifications } from '../lib/notifications';
+import { consumeFromQueue, triggerRefillIfNeeded } from '../lib/lessonQueue';
 
 interface LessonState {
     lesson: DailyLesson | null;
@@ -103,13 +104,29 @@ export const useLessonStore = create<LessonState>((set) => ({
             return;
         }
 
+        // 2. Try to consume from the pre-generated lesson queue
+        try {
+            const consumed = await consumeFromQueue(session.user.id, today);
+            if (consumed) {
+                set({ lesson: normalizeLesson(consumed), loading: false });
 
-        // 2. Pick a purely random topic from all topics
+                // Background: refill queue if running low
+                triggerRefillIfNeeded(
+                    accessToken,
+                    session.user.id,
+                    profile?.difficulty_level ?? 'adult'
+                );
+                return;
+            }
+        } catch {
+            // Queue consumption failed — fall through to on-demand generation
+        }
+
+        // 3. Fallback: on-demand generation (queue empty or not yet populated)
         const { data: allTopics } = await supabase.from('topics').select('*');
         const topicPool = allTopics ?? [];
         const randomTopic = topicPool.length > 0 ? topicPool[Math.floor(Math.random() * topicPool.length)] : null;
 
-        // 3. Pick a random user interest
         const { data: interests } = await supabase
             .from('user_interests')
             .select('*')
@@ -119,7 +136,6 @@ export const useLessonStore = create<LessonState>((set) => ({
             ? interests[Math.floor(Math.random() * interests.length)]
             : null;
 
-        // 4. Call Edge Function — pass token in both header AND body (verify_jwt is now off, function validates internally)
         try {
             const { data, error } = await supabase.functions.invoke('generate-lesson', {
                 headers: {
@@ -129,7 +145,7 @@ export const useLessonStore = create<LessonState>((set) => ({
                     topic_name: randomTopic?.name ?? 'Science',
                     interest_name: randomInterest?.interest_name ?? 'general knowledge',
                     user_id: session.user.id,
-                    access_token: accessToken, // belt-and-suspenders for web
+                    access_token: accessToken,
                     difficulty_level: profile?.difficulty_level ?? 'adult',
                     force_new: false,
                 },
@@ -138,6 +154,13 @@ export const useLessonStore = create<LessonState>((set) => ({
             if (error) throw error;
             if (!data?.lesson) throw new Error('No lesson returned from server');
             set({ lesson: normalizeLesson(data.lesson as DailyLesson), loading: false });
+
+            // Also trigger queue refill in background since queue was empty
+            triggerRefillIfNeeded(
+                accessToken,
+                session.user.id,
+                profile?.difficulty_level ?? 'adult'
+            );
         } catch (err: unknown) {
             const message = err instanceof Error ? err.message : 'Failed to generate lesson.';
             set({ loading: false, error: message });

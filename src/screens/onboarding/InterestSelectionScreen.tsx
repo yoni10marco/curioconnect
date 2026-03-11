@@ -12,6 +12,8 @@ import {
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/theme';
 import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../store/useAuthStore';
+import { buildLessonPairs } from '../../lib/lessonQueue';
+import { Topic } from '../../lib/types';
 
 const ALL_INTERESTS = [
     '🎮 Gaming', '⚽ Football', '🎸 Music', '🎨 Art', '🏋️ Fitness',
@@ -93,6 +95,28 @@ export default function InterestSelectionScreen() {
             ...(ageInput && !isNaN(parsedAge) && { age: parsedAge }),
             ...(jobInput.trim() && { job_title: jobInput.trim() }),
         });
+
+        // Fire-and-forget: pre-generate lesson queue for this user
+        (async () => {
+            try {
+                const { data: allTopics } = await supabase.from('topics').select('id, name, category');
+                const topics = (allTopics ?? []) as Topic[];
+                const interestNames = Array.from(selected);
+                const pairs = buildLessonPairs(interestNames, topics);
+
+                if (pairs.length > 0) {
+                    supabase.functions.invoke('generate-lesson-batch', {
+                        headers: { Authorization: `Bearer ${session.access_token}` },
+                        body: {
+                            lessons: pairs,
+                            difficulty_level: difficulty,
+                        },
+                    });
+                }
+            } catch {
+                // Silent — queue generation is best-effort
+            }
+        })();
 
         await fetchProfile(session.user.id);
         setSaving(false);

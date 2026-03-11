@@ -16,6 +16,7 @@ export type Profile = {
     referral_code?: string;
     referred_by_user_id?: string | null;
     referral_reward_given?: boolean;
+    last_difficulty_change?: string | null;
 };
 
 export type UserInterest = {
@@ -65,4 +66,16 @@ export type Feedback = {
     user_id: string | null;
     content: string;
     created_at: string;
+};
+
+export type QueuedLesson = {
+    id: string;
+    user_id: string;
+    topic_name: string;
+    interest_name: string;
+    title: string;
+    content_markdown: string;
+    quiz_data: PageData[];
+    generated_at: string;
+    queue_position: number;
 };
