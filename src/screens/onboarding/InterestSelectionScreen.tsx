@@ -106,6 +106,7 @@ export default function InterestSelectionScreen() {
 
                 if (pairs.length > 0) {
                     supabase.functions.invoke('generate-lesson-batch', {
+                        headers: { Authorization: `Bearer ${session.access_token}` },
                         body: {
                             lessons: pairs,
                             difficulty_level: difficulty,

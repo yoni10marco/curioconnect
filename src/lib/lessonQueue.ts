@@ -82,7 +82,7 @@ export async function getQueueSize(userId: string): Promise<number> {
  * Fire-and-forget: trigger batch generation if queue is below threshold.
  */
 export async function triggerRefillIfNeeded(
-    _accessToken: string,
+    accessToken: string,
     userId: string,
     difficultyLevel: string
 ): Promise<void> {
@@ -105,6 +105,7 @@ export async function triggerRefillIfNeeded(
 
     // Fire and forget — don't await
     supabase.functions.invoke('generate-lesson-batch', {
+        headers: { Authorization: `Bearer ${accessToken}` },
         body: {
             lessons: pairs,
             difficulty_level: difficultyLevel,
