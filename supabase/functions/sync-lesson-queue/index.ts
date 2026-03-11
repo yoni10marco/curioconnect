@@ -2,6 +2,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
 const QUEUE_TARGET = 25;
+const CHUNK_SIZE = 5;
 
 Deno.serve(async (req: Request) => {
   const corsHeaders = {
@@ -15,6 +16,8 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
+    console.log("sync-lesson-queue: started");
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const geminiKey = Deno.env.get("GEMINI_API_KEY");
@@ -47,6 +50,7 @@ Deno.serve(async (req: Request) => {
       error: authError,
     } = await adminSupabase.auth.getUser(token);
     if (authError || !user) {
+      console.log("sync-lesson-queue: auth failed", authError?.message);
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -68,18 +72,17 @@ Deno.serve(async (req: Request) => {
     // --- Step 1: Handle deletions ---
 
     if (difficulty_changed) {
-      // Full purge — difficulty changed, regenerate everything
       const { data: deleted } = await adminSupabase
         .from("lesson_queue")
         .delete()
         .eq("user_id", user.id)
         .select("id");
       deletedCount = deleted?.length ?? 0;
+      console.log(`sync-lesson-queue: purged ${deletedCount} lessons (difficulty changed)`);
     } else if (
       Array.isArray(removed_interests) &&
       removed_interests.length > 0
     ) {
-      // Delete only lessons for removed interests
       const { data: deleted } = await adminSupabase
         .from("lesson_queue")
         .delete()
@@ -87,6 +90,7 @@ Deno.serve(async (req: Request) => {
         .in("interest_name", removed_interests)
         .select("id");
       deletedCount = deleted?.length ?? 0;
+      console.log(`sync-lesson-queue: deleted ${deletedCount} lessons for removed interests`);
     }
 
     // --- Step 2: Count remaining and determine how many to generate ---
@@ -100,6 +104,7 @@ Deno.serve(async (req: Request) => {
     const toGenerate = Math.max(0, QUEUE_TARGET - remaining);
 
     if (toGenerate === 0) {
+      console.log("sync-lesson-queue: queue already at target, nothing to generate");
       return new Response(
         JSON.stringify({ deleted: deletedCount, generated: 0 }),
         {
@@ -129,18 +134,14 @@ Deno.serve(async (req: Request) => {
 
     if (topicNames.length === 0) {
       return new Response(
-        JSON.stringify({
-          deleted: deletedCount,
-          generated: 0,
-          error: "No topics found",
-        }),
+        JSON.stringify({ deleted: deletedCount, generated: 0, error: "No topics found" }),
         {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         }
       );
     }
 
-    // --- Step 4: Build lesson pairs (round-robin interests × random topics) ---
+    // --- Step 4: Build lesson pairs ---
 
     const lessonPairs: { topic_name: string; interest_name: string }[] = [];
     for (let i = 0; i < toGenerate; i++) {
@@ -149,18 +150,34 @@ Deno.serve(async (req: Request) => {
       lessonPairs.push({ topic_name: topic, interest_name: interest });
     }
 
-    // --- Step 5: Single Gemini call to generate all lessons ---
+    console.log(`sync-lesson-queue: generating ${lessonPairs.length} lessons in chunks of ${CHUNK_SIZE}`);
 
-    const pairsList = lessonPairs
-      .map(
-        (p, i) =>
-          `${i + 1}. Topic: "${p.topic_name}", Interest: "${p.interest_name}"`
-      )
-      .join("\n");
+    // --- Step 5: Generate in chunks ---
 
-    const geminiPrompt = `You are an expert lesson generator for a gamified learning app called CurioConnect (like Duolingo, but for everything).
+    // Get current max queue_position
+    const { data: maxPosRow } = await adminSupabase
+      .from("lesson_queue")
+      .select("queue_position")
+      .eq("user_id", user.id)
+      .order("queue_position", { ascending: false })
+      .limit(1)
+      .single();
 
-Generate exactly ${lessonPairs.length} short educational lessons based on the topic+interest pairs below.
+    let nextPosition = (maxPosRow?.queue_position ?? -1) + 1;
+
+    for (let i = 0; i < lessonPairs.length; i += CHUNK_SIZE) {
+      const chunk = lessonPairs.slice(i, i + CHUNK_SIZE);
+
+      const pairsList = chunk
+        .map(
+          (p, idx) =>
+            `${idx + 1}. Topic: "${p.topic_name}", Interest: "${p.interest_name}"`
+        )
+        .join("\n");
+
+      const geminiPrompt = `You are an expert lesson generator for a gamified learning app called CurioConnect (like Duolingo, but for everything).
+
+Generate exactly ${chunk.length} short educational lessons based on the topic+interest pairs below.
 Difficulty level: "${difficulty}" (adjust vocabulary and depth accordingly — "child" = simple & fun, "teen" = engaging & clear, "adult" = detailed & insightful).
 
 Each lesson should creatively connect the academic topic with the user's personal interest to make learning engaging and relatable.
@@ -175,77 +192,74 @@ For EACH lesson, produce:
 - "content_markdown": educational content in markdown (~400-600 words). Use headers (##), bold, bullet points, and examples. Make it fun and connect the topic to the interest naturally.
 - "quiz_data": an array with exactly 1 object: { "text": "" (empty string), "questions": [ array of 3 quiz questions ] }. Each question: { "q": "question text", "options": ["A","B","C","D"], "answer_idx": 0-3 }
 
-Return ONLY a valid JSON array of ${lessonPairs.length} lesson objects. No markdown fences, no explanation — just the JSON array.`;
+Return ONLY a valid JSON array of ${chunk.length} lesson objects. No markdown fences, no explanation — just the JSON array.`;
 
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`;
-    const geminiResponse = await fetch(geminiUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: geminiPrompt }] }],
-        generationConfig: {
-          temperature: 0.8,
-          responseMimeType: "application/json",
-        },
-      }),
-    });
+      try {
+        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`;
+        const geminiResponse = await fetch(geminiUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: geminiPrompt }] }],
+            generationConfig: {
+              temperature: 0.8,
+              responseMimeType: "application/json",
+            },
+          }),
+        });
 
-    if (!geminiResponse.ok) {
-      const errText = await geminiResponse.text();
-      throw new Error(`Gemini API error ${geminiResponse.status}: ${errText}`);
-    }
+        if (!geminiResponse.ok) {
+          const errText = await geminiResponse.text();
+          console.error(`sync-lesson-queue: Gemini error chunk ${i / CHUNK_SIZE + 1}: ${geminiResponse.status} ${errText}`);
+          continue;
+        }
 
-    const geminiData = await geminiResponse.json();
-    const rawText =
-      geminiData.candidates?.[0]?.content?.parts?.[0]?.text;
+        const geminiData = await geminiResponse.json();
+        const rawText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text;
 
-    if (!rawText) {
-      throw new Error("Empty response from Gemini");
-    }
+        if (!rawText) {
+          console.error(`sync-lesson-queue: empty Gemini response for chunk ${i / CHUNK_SIZE + 1}`);
+          continue;
+        }
 
-    const generatedLessons = JSON.parse(rawText);
+        const generatedLessons = JSON.parse(rawText);
 
-    if (!Array.isArray(generatedLessons)) {
-      throw new Error("Gemini did not return an array");
-    }
+        if (!Array.isArray(generatedLessons)) {
+          console.error(`sync-lesson-queue: non-array response for chunk ${i / CHUNK_SIZE + 1}`);
+          continue;
+        }
 
-    // Get current max queue_position
-    const { data: maxPosRow } = await adminSupabase
-      .from("lesson_queue")
-      .select("queue_position")
-      .eq("user_id", user.id)
-      .order("queue_position", { ascending: false })
-      .limit(1)
-      .single();
+        const rows = generatedLessons
+          .filter((l: any) => l.title && l.content_markdown && l.quiz_data)
+          .map((l: any) => ({
+            user_id: user.id,
+            topic_name: l.topic_name ?? "General",
+            interest_name: l.interest_name ?? "general knowledge",
+            title: l.title,
+            content_markdown: l.content_markdown,
+            quiz_data: l.quiz_data,
+            queue_position: nextPosition++,
+          }));
 
-    let nextPosition = (maxPosRow?.queue_position ?? -1) + 1;
+        if (rows.length > 0) {
+          const { error: insertError } = await adminSupabase
+            .from("lesson_queue")
+            .insert(rows);
 
-    const rows = generatedLessons
-      .filter(
-        (l: any) =>
-          l.title && l.content_markdown && l.quiz_data
-      )
-      .map((l: any) => ({
-        user_id: user.id,
-        topic_name: l.topic_name ?? "General",
-        interest_name: l.interest_name ?? "general knowledge",
-        title: l.title,
-        content_markdown: l.content_markdown,
-        quiz_data: l.quiz_data,
-        queue_position: nextPosition++,
-      }));
+          if (insertError) {
+            console.error(`sync-lesson-queue: DB insert error chunk ${i / CHUNK_SIZE + 1}:`, insertError.message);
+            continue;
+          }
+        }
 
-    if (rows.length > 0) {
-      const { error: insertError } = await adminSupabase
-        .from("lesson_queue")
-        .insert(rows);
-
-      if (insertError) {
-        throw insertError;
+        generatedCount += rows.length;
+        console.log(`sync-lesson-queue: chunk ${i / CHUNK_SIZE + 1} done, ${rows.length} lessons inserted`);
+      } catch (chunkErr) {
+        console.error(`sync-lesson-queue: chunk ${i / CHUNK_SIZE + 1} failed:`, String(chunkErr));
       }
     }
 
-    generatedCount = rows.length;
+    console.log(`sync-lesson-queue: complete. deleted=${deletedCount}, generated=${generatedCount}`);
 
     return new Response(
       JSON.stringify({

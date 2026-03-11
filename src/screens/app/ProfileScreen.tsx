@@ -133,7 +133,6 @@ export default function ProfileScreen() {
                 // Fire-and-forget: sync queue with newly discovered interests
                 if (session) {
                     supabase.functions.invoke('sync-lesson-queue', {
-                        headers: { Authorization: `Bearer ${session.access_token}` },
                         body: {
                             removed_interests: [],
                             added_interests: added,
@@ -240,7 +239,6 @@ export default function ProfileScreen() {
         if (difficultyChanged || removedInterests.length > 0 || addedInterests.length > 0) {
             // Fire-and-forget sync
             supabase.functions.invoke('sync-lesson-queue', {
-                headers: { Authorization: `Bearer ${session.access_token}` },
                 body: {
                     removed_interests: removedInterests,
                     added_interests: addedInterests,
