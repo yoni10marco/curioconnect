@@ -17,6 +17,7 @@ export type Profile = {
     referred_by_user_id?: string | null;
     referral_reward_given?: boolean;
     last_difficulty_change?: string | null;
+    last_interest_change?: string | null;
 };
 
 export type UserInterest = {

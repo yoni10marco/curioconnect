@@ -14,11 +14,13 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
         { data: profile },
         { data: interests },
         { data: lessons },
+        { data: queuedLessons },
         { data: { user: authUser } },
     ] = await Promise.all([
         supabase.from('profiles').select('*').eq('id', id).single(),
         supabase.from('user_interests').select('interest_name').eq('user_id', id),
-        supabase.from('daily_lessons').select('id, title, is_completed, created_at').eq('user_id', id).order('created_at', { ascending: false }).limit(20),
+        supabase.from('daily_lessons').select('id, title, is_completed, created_at, interest_name').eq('user_id', id).order('created_at', { ascending: false }).limit(20),
+        supabase.from('lesson_queue').select('id, title, interest_name, topic_name, queue_position, generated_at').eq('user_id', id).order('queue_position', { ascending: true }),
         supabase.auth.admin.getUserById(id),
     ]);
 
@@ -101,6 +103,14 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
                             </dd>
                         </div>
                         <div className="flex justify-between">
+                            <dt className="text-gray-500">Last Difficulty Change</dt>
+                            <dd className="font-medium">{profile.last_difficulty_change ? new Date(profile.last_difficulty_change).toLocaleDateString() : '—'}</dd>
+                        </div>
+                        <div className="flex justify-between">
+                            <dt className="text-gray-500">Last Interest Change</dt>
+                            <dd className="font-medium">{profile.last_interest_change ? new Date(profile.last_interest_change).toLocaleDateString() : '—'}</dd>
+                        </div>
+                        <div className="flex justify-between">
                             <dt className="text-gray-500">Admin Role</dt>
                             <dd className="font-medium">{profile.admin_role ?? 'User'}</dd>
                         </div>
@@ -126,6 +136,34 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
                 </div>
             </div>
 
+            {/* Lesson Queue */}
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm mb-8">
+                <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                    <h2 className="font-semibold text-gray-900">Lesson Queue</h2>
+                    <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-blue-100 text-blue-700">
+                        {queuedLessons?.length ?? 0} queued
+                    </span>
+                </div>
+                {queuedLessons && queuedLessons.length > 0 ? (
+                    <ul className="divide-y divide-gray-50">
+                        {queuedLessons.map(q => (
+                            <li key={q.id} className="flex items-center justify-between px-6 py-3">
+                                <div className="flex flex-col">
+                                    <span className="text-sm text-gray-800">{q.title}</span>
+                                    <span className="text-xs text-gray-400">{q.topic_name} · {q.interest_name}</span>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <span className="text-xs text-gray-400">#{q.queue_position}</span>
+                                    <span className="text-xs text-gray-400">{new Date(q.generated_at).toLocaleDateString()}</span>
+                                </div>
+                            </li>
+                        ))}
+                    </ul>
+                ) : (
+                    <p className="px-6 py-4 text-sm text-gray-400">No lessons in queue.</p>
+                )}
+            </div>
+
             {/* Lesson history */}
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
                 <div className="px-6 py-4 border-b border-gray-100">
@@ -135,7 +173,10 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
                     <ul className="divide-y divide-gray-50">
                         {lessons.map(lesson => (
                             <li key={lesson.id} className="flex items-center justify-between px-6 py-3">
-                                <span className="text-sm text-gray-800">{lesson.title}</span>
+                                <div className="flex flex-col">
+                                    <span className="text-sm text-gray-800">{lesson.title}</span>
+                                    {lesson.interest_name && <span className="text-xs text-gray-400">{lesson.interest_name}</span>}
+                                </div>
                                 <div className="flex items-center gap-4">
                                     <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${lesson.is_completed ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
                                         {lesson.is_completed ? 'Completed' : 'In progress'}

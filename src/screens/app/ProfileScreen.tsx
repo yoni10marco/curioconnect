@@ -180,6 +180,23 @@ export default function ProfileScreen() {
             }
         }
 
+        // Check interest change weekly limit
+        const oldInterestsForCheck = initialInterestsRef.current;
+        const interestsChanged = [...oldInterestsForCheck].some(i => !selected.has(i)) || [...selected].some(i => !oldInterestsForCheck.has(i));
+        if (interestsChanged && profile?.last_interest_change) {
+            const lastChange = new Date(profile.last_interest_change);
+            const now = new Date();
+            const daysSince = Math.floor((now.getTime() - lastChange.getTime()) / (1000 * 60 * 60 * 24));
+            if (daysSince < 7) {
+                const nextDate = new Date(lastChange);
+                nextDate.setDate(nextDate.getDate() + 7);
+                const nextStr = `${nextDate.getFullYear()}-${String(nextDate.getMonth() + 1).padStart(2, '0')}-${String(nextDate.getDate()).padStart(2, '0')}`;
+                Alert.alert('Interests Locked', `You can change interests again on ${nextStr}.`);
+                setSelected(new Set(oldInterestsForCheck));
+                return;
+            }
+        }
+
         setSaving(true);
         // Delete existing interests
         const { error: deleteError } = await supabase
@@ -212,6 +229,7 @@ export default function ProfileScreen() {
             age: !isNaN(parsedAge) ? parsedAge : null,
             job_title: jobInput.trim() || null,
             ...(difficultyChanged && { last_difficulty_change: todayStr }),
+            ...(interestsChanged && { last_interest_change: todayStr }),
         });
 
         // Sync lesson queue: compute interest diff and trigger sync
