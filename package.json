@@ -38,5 +38,10 @@
     "@types/react": "~18.2.79",
     "typescript": "^5.3.3"
   },
-  "private": true
+  "private": true,
+  "overrides": {
+    "markdown-it": "^14.1.1",
+    "tar": "^7.5.11",
+    "send": "^1.1.0"
+  }
 }
