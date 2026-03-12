@@ -35,3 +35,6 @@ web-build/
 
 # TypeScript
 *.tsbuildinfo
+
+# Dev notes (local only)
+DEV_NOTES.md
