@@ -200,7 +200,7 @@ For EACH lesson, produce:
 Return ONLY a valid JSON array of ${chunk.length} lesson objects. No markdown fences, no explanation — just the JSON array.`;
 
       try {
-        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`;
+        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent?key=${geminiKey}`;
         const geminiResponse = await fetch(geminiUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
