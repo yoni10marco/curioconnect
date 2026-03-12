@@ -126,19 +126,19 @@ function AppNavigator() {
 }
 
 export default function RootNavigator() {
-    const { session, setSession, fetchProfile, profile } = useAuthStore();
+    const { session, setSession, fetchProfile, profile, checkAndResetStreak } = useAuthStore();
     const [hasInterests, setHasInterests] = useState<boolean | null>(null);
     const [checkingInterests, setCheckingInterests] = useState(false);
 
     useEffect(() => {
         supabase.auth.getSession().then(({ data: { session } }) => {
             setSession(session);
-            if (session) fetchProfile(session.user.id);
+            if (session) fetchProfile(session.user.id).then(() => checkAndResetStreak());
         });
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
             setSession(session);
-            if (session) fetchProfile(session.user.id);
+            if (session) fetchProfile(session.user.id).then(() => checkAndResetStreak());
         });
 
         return () => subscription.unsubscribe();
