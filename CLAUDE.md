@@ -28,7 +28,7 @@ CurioConnect is a React Native + Expo app ("Duolingo for everything") — a gami
 - **Supabase** — auth, database (PostgreSQL with RLS), Edge Functions (Deno)
 - **Zustand** — global state management
 - **React Navigation native-stack** — navigation
-- **Google Gemini 2.5 Flash** — lesson generation and interest discovery via Edge Functions
+- **Google Gemini 3.1 Flash Lite Preview** (`gemini-3.1-flash-lite-preview`) — lesson generation and interest discovery via Edge Functions
 - **Expo Notifications** — daily push notifications (morning + evening)
 - **Next.js 14** — admin dashboard (separate app in `/admin`)
 
@@ -79,11 +79,11 @@ Implemented in [src/lib/notifications.ts](src/lib/notifications.ts):
 - `signInWithGoogle` uses `window.location.origin` as redirect on web, `makeRedirectUri({ scheme: 'curioconnect' })` on native
 
 **Edge Functions** (in `supabase/functions/`):
-- `generate-lesson` — on-demand single lesson generation via Gemini 2.5 Flash; produces multi-page format (4-6 pages, 2 quiz questions each)
+- `generate-lesson` — on-demand single lesson generation via Gemini 3.1 Flash Lite Preview; produces multi-page format (4-6 pages, 2 quiz questions each)
 - `generate-lesson-batch` — pre-generates up to 25 lessons in chunks of 5 per Gemini call; same multi-page format as `generate-lesson`; called fire-and-forget from onboarding and queue refill
 - `sync-lesson-queue` — reactive sync when interests/difficulty change; deletes stale lessons, regenerates to fill queue back to 25
 - `get-leaderboard` — fetches top 100 users sorted by XP or streak using service role key; takes `activeTab` param (`'xp'` | `'streak_count'`)
-- `discover-interests` — analyzes a free-text user prompt via Gemini 2.5 Flash (single call: moderation + discovery); adds up to 3 new interests per call; max 25 interests total per user; deduplicates against existing interests
+- `discover-interests` — analyzes a free-text user prompt via Gemini 3.1 Flash Lite Preview (single call: moderation + discovery); adds up to 3 new interests per call; max 25 interests total per user; deduplicates against existing interests
 
 **Edge Function deployment**: All functions must be deployed with `--no-verify-jwt` (or `verify_jwt: false` via MCP) because they handle auth internally via `adminSupabase.auth.getUser(token)`. The Supabase gateway's JWT check would block valid requests otherwise. All client-side calls must include manual `Authorization: Bearer ${session.access_token}` headers.
 
