@@ -47,6 +47,7 @@ Two Zustand stores:
 - `signIn/signUp/signOut`, `updateProfile`, `addXp`, `checkAndResetStreak`
 - Streak resets if `last_lesson_date` is neither today nor yesterday
 - **Streak freeze**: if `streak_freeze_count >= 1`, consumes one freeze instead of resetting streak to 0
+- `checkAndResetStreak` is called on app launch (initial session + auth state changes) in `RootNavigator`, so streaks are always evaluated on open — not only when the Dashboard is focused
 
 **[src/store/useLessonStore.ts](src/store/useLessonStore.ts)** — daily lesson lifecycle
 - `fetchOrGenerateLesson` → checks DB for today's lesson → tries consuming from `lesson_queue` → falls back to on-demand `generate-lesson` Edge Function
