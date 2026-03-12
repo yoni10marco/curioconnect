@@ -109,17 +109,17 @@ function AppNavigator() {
             <AppStack.Screen
                 name="About"
                 component={AboutScreen}
-                options={{ headerShown: false, animation: 'slide_from_right' }}
+                options={{ headerShown: false, animation: 'default' }}
             />
             <AppStack.Screen
                 name="Feedback"
                 component={FeedbackScreen}
-                options={{ headerShown: false, animation: 'slide_from_right' }}
+                options={{ headerShown: false, animation: 'default' }}
             />
             <AppStack.Screen
                 name="News"
                 component={NewsScreen}
-                options={{ headerShown: false, animation: 'slide_from_right' }}
+                options={{ headerShown: false, animation: 'default' }}
             />
         </AppStack.Navigator>
     );

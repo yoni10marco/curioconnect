@@ -5,6 +5,7 @@ import { makeRedirectUri } from 'expo-auth-session';
 import { Platform } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { Profile } from '../lib/types';
+import { MAX_FREEZE } from '../lib/ads';
 import { cancelAllNotifications } from '../lib/notifications';
 
 WebBrowser.maybeCompleteAuthSession();
@@ -22,6 +23,7 @@ interface AuthState {
     signOut: () => Promise<void>;
     updateProfile: (updates: Partial<Profile>) => Promise<void>;
     addXp: (amount: number) => Promise<void>;
+    addStreakFreeze: () => Promise<void>;
     checkAndResetStreak: () => Promise<void>;
 }
 
@@ -184,6 +186,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             .single();
         // Always update in-memory state — use server data if available, else merge locally
         set({ profile: (data ?? (profile ? { ...profile, ...updates } : null)) as Profile | null });
+    },
+
+    addStreakFreeze: async () => {
+        const { profile, updateProfile } = get();
+        if (!profile) return;
+        const current = profile.streak_freeze_count ?? 0;
+        if (current >= MAX_FREEZE) return;
+        await updateProfile({ streak_freeze_count: current + 1 });
     },
 
     addXp: async (amount: number) => {

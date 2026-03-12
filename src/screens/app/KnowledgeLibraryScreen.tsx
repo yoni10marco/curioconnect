@@ -74,9 +74,6 @@ export default function KnowledgeLibraryScreen() {
                                     {new Date(lesson.created_at).toLocaleDateString()}
                                 </Text>
                             </View>
-                            <View style={styles.xpBadge}>
-                                <Text style={styles.xpText}>+50 XP</Text>
-                            </View>
                         </View>
                     ))}
                 </ScrollView>

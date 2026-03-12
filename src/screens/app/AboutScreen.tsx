@@ -23,7 +23,7 @@ export default function AboutScreen() {
                     <Text style={styles.backButtonText}>←</Text>
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>About Us</Text>
-                <View style={{ width: 44 }} /> {/* Spacer */}
+                <View style={{ width: 44 }} />
             </View>
 
             <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>

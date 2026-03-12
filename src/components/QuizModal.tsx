@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
     Modal,
     View,
@@ -9,7 +9,9 @@ import {
     SafeAreaView,
     Platform,
     ScrollView,
+    Alert,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Haptics are native-only — safe no-op on web
 const triggerHaptic = async (type: 'success' | 'error') => {
@@ -25,6 +27,8 @@ import { COLORS, FONTS, SPACING, RADIUS } from '../lib/theme';
 import { QuizQuestion } from '../lib/types';
 import { useLessonStore } from '../store/useLessonStore';
 import { useAuthStore } from '../store/useAuthStore';
+import { useRewardedAd } from '../hooks/useRewardedAd';
+import { AD_UNITS } from '../lib/ads';
 
 interface Props {
     visible: boolean;
@@ -42,6 +46,7 @@ export default function QuizModal({ visible, questions, isFinalPage, onClose, on
     const [answerState, setAnswerState] = useState<AnswerState>('unanswered');
     const [score, setScore] = useState(0);
     const [finished, setFinished] = useState(false);
+    const [doubleXpClaimed, setDoubleXpClaimed] = useState(false);
 
     // Store shuffled options and correct answer string for current question
     const [shuffledOptions, setShuffledOptions] = useState<string[]>([]);
@@ -50,6 +55,35 @@ export default function QuizModal({ visible, questions, isFinalPage, onClose, on
     const shakeAnim = useRef(new Animated.Value(0)).current;
     const { lesson, completeLesson } = useLessonStore();
     const { addXp } = useAuthStore();
+    // Capture completion state when modal opens so results screen stays stable after completeLesson() runs
+    const wasAlreadyCompleted = useRef(lesson?.is_completed ?? false);
+
+    // Accumulate quiz XP across ALL pages so the double XP ad covers the full lesson
+    const cumulativeQuizXpRef = useRef(0);
+
+    // Once-per-day guard for double XP ad
+    const [doubleXpWatchedToday, setDoubleXpWatchedToday] = useState(false);
+    useEffect(() => {
+        AsyncStorage.getItem('doubleXpLastDate').then((stored) => {
+            const d = new Date();
+            const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            if (stored === today) setDoubleXpWatchedToday(true);
+        });
+    }, []);
+
+    // Total XP earned this lesson (all quiz answers accumulated + final bonus), used for doubling
+    const totalXpEarned = cumulativeQuizXpRef.current + (isFinalPage && finished ? 30 : 0);
+
+    const doubleXpAd = useRewardedAd(AD_UNITS.doubleXp, async () => {
+        const xpToDouble = cumulativeQuizXpRef.current + 30;
+        const d = new Date();
+        const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        await AsyncStorage.setItem('doubleXpLastDate', today);
+        setDoubleXpWatchedToday(true);
+        setDoubleXpClaimed(true);
+        await addXp(xpToDouble);
+        Alert.alert('Double XP! 🚀', `+${xpToDouble} bonus XP earned!`);
+    });
 
     const shake = () => {
         triggerHaptic('error');
@@ -84,9 +118,6 @@ export default function QuizModal({ visible, questions, isFinalPage, onClose, on
             triggerHaptic('success');
             setAnswerState('correct');
             setScore((s) => s + 1);
-            if (!lesson?.is_completed) {
-                addXp(20);
-            }
         } else {
             setAnswerState('wrong');
             shake();
@@ -97,6 +128,12 @@ export default function QuizModal({ visible, questions, isFinalPage, onClose, on
         const nextIdx = current + 1;
         if (nextIdx >= questions.length) {
             setFinished(true);
+            // Add quiz XP first (awaited), so completeLesson reads the updated profile
+            if (!wasAlreadyCompleted.current && score > 0) {
+                const quizXp = score * 20;
+                cumulativeQuizXpRef.current += quizXp;
+                await addXp(quizXp);
+            }
             if (isFinalPage) {
                 await completeLesson();
             }
@@ -113,6 +150,7 @@ export default function QuizModal({ visible, questions, isFinalPage, onClose, on
         setAnswerState('unanswered');
         setScore(0);
         setFinished(false);
+        setDoubleXpClaimed(false);
         onComplete();
     };
 
@@ -168,9 +206,22 @@ export default function QuizModal({ visible, questions, isFinalPage, onClose, on
                             {isFinalPage ? 'Lesson Complete!' : 'Knowledge Checked!'}
                         </Text>
                         <Text style={styles.resultsScore}>{score} / {questions.length} correct</Text>
-                        {!lesson?.is_completed && <Text style={styles.resultsXp}>+{score * 20} XP Earned! 🎉</Text>}
-                        {isFinalPage && !lesson?.is_completed && <Text style={styles.resultsXp}>+30 XP Final Bonus! 🎓</Text>}
-                        {isFinalPage && !lesson?.is_completed && <Text style={styles.resultsStreak}>Your streak is growing! 🔥</Text>}
+                        {!wasAlreadyCompleted.current && cumulativeQuizXpRef.current > 0 && <Text style={styles.resultsXp}>+{cumulativeQuizXpRef.current} XP Earned! 🎉</Text>}
+                        {isFinalPage && !wasAlreadyCompleted.current && <Text style={styles.resultsXp}>+30 XP Final Bonus! 🎓</Text>}
+                        {isFinalPage && !wasAlreadyCompleted.current && <Text style={styles.resultsStreak}>Your streak is growing! 🔥</Text>}
+                        {/* Ad: Double XP — only on first completion of final page, once per day */}
+                        {isFinalPage && !wasAlreadyCompleted.current && !doubleXpClaimed && !doubleXpWatchedToday && (
+                            <TouchableOpacity
+                                style={[styles.doubleXpButton, !doubleXpAd.isLoaded && styles.doubleXpButtonDisabled]}
+                                onPress={() => doubleXpAd.show()}
+                                disabled={!doubleXpAd.isLoaded}
+                                activeOpacity={0.85}
+                            >
+                                <Text style={styles.doubleXpButtonText}>
+                                    {doubleXpAd.isLoaded ? `📺 Watch ad → Double XP (+${cumulativeQuizXpRef.current + 30} bonus)` : '⏳ Loading ad...'}
+                                </Text>
+                            </TouchableOpacity>
+                        )}
                         <TouchableOpacity style={styles.doneButton} onPress={handleRestartAndClose}>
                             <Text style={styles.doneButtonText}>{isFinalPage ? 'Back to Dashboard' : 'Read Next Page'}</Text>
                         </TouchableOpacity>
@@ -401,6 +452,29 @@ const styles = StyleSheet.create({
         fontSize: FONTS.sizes.md,
         color: COLORS.streak,
         marginBottom: SPACING.xl,
+    },
+    doubleXpButton: {
+        backgroundColor: COLORS.accent,
+        borderRadius: RADIUS.xl,
+        paddingHorizontal: SPACING.xl,
+        paddingVertical: SPACING.md,
+        marginBottom: SPACING.md,
+        shadowColor: COLORS.accent,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.4,
+        shadowRadius: 10,
+        elevation: 6,
+    },
+    doubleXpButtonDisabled: {
+        backgroundColor: COLORS.border,
+        shadowOpacity: 0,
+        elevation: 0,
+    },
+    doubleXpButtonText: {
+        color: COLORS.textDark,
+        fontSize: FONTS.sizes.md,
+        fontWeight: FONTS.weights.bold,
+        textAlign: 'center',
     },
     doneButton: {
         backgroundColor: COLORS.primary,

@@ -18,6 +18,7 @@ export type Profile = {
     referral_reward_given?: boolean;
     last_difficulty_change?: string | null;
     last_interest_change?: string | null;
+    bonus_lesson_date?: string | null;
 };
 
 export type UserInterest = {

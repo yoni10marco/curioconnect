@@ -38,7 +38,7 @@ export default function FeedbackScreen() {
                         <Text style={styles.backButtonText}>←</Text>
                     </TouchableOpacity>
                     <Text style={styles.headerTitle}>Feedback Sent</Text>
-                    <View style={{ width: 44 }} /> {/* Spacer */}
+                    <View style={{ width: 44 }} />
                 </View>
                 <View style={styles.successContainer}>
                     <Text style={styles.successEmoji}>💖</Text>
@@ -63,7 +63,7 @@ export default function FeedbackScreen() {
                     <Text style={styles.backButtonText}>←</Text>
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Send Feedback</Text>
-                <View style={{ width: 44 }} /> {/* Spacer */}
+                <View style={{ width: 44 }} />
             </View>
 
             <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">

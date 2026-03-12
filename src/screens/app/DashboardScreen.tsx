@@ -7,8 +7,8 @@ import {
     Animated,
     ScrollView,
     Alert,
-    Linking,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -19,15 +19,50 @@ import { AppStackParamList } from '../../navigation';
 import { APP_VERSION } from '../../lib/version';
 import BottomNav from '../../components/BottomNav';
 import { supabase } from '../../lib/supabase';
+import { useRewardedAd } from '../../hooks/useRewardedAd';
+import { AD_UNITS, MAX_FREEZE } from '../../lib/ads';
 
 type Nav = NativeStackNavigationProp<AppStackParamList, 'Dashboard'>;
 
 export default function DashboardScreen() {
     const navigation = useNavigation<Nav>();
-    const { profile, session, checkAndResetStreak } = useAuthStore();
-    const { fetchOrGenerateLesson, loading, lesson, resetLesson, checkTodayLesson } = useLessonStore();
+    const { profile, session, checkAndResetStreak, addStreakFreeze } = useAuthStore();
+    const { fetchOrGenerateLesson, loading, lesson, resetLesson, checkTodayLesson, unlockBonusLesson } = useLessonStore();
 
     const [unreadNews, setUnreadNews] = useState(0);
+    const [bonusLessonLoading, setBonusLessonLoading] = useState(false);
+    const [freezeWatchedToday, setFreezeWatchedToday] = useState(false);
+
+    const _d = new Date();
+    const todayStr = `${_d.getFullYear()}-${String(_d.getMonth() + 1).padStart(2, '0')}-${String(_d.getDate()).padStart(2, '0')}`;
+
+    useEffect(() => {
+        AsyncStorage.getItem('freezeAdLastDate').then((stored) => {
+            if (stored === todayStr) setFreezeWatchedToday(true);
+        });
+    }, [todayStr]);
+
+    const canGetFreeze = (profile?.streak_freeze_count ?? 0) < MAX_FREEZE;
+    const bonusAlreadyUnlocked = profile?.bonus_lesson_date === todayStr;
+
+    const freezeAd = useRewardedAd(AD_UNITS.freeze, async () => {
+        await AsyncStorage.setItem('freezeAdLastDate', todayStr);
+        setFreezeWatchedToday(true);
+        await addStreakFreeze();
+        Alert.alert('Freeze Added! ❄️', 'You earned +1 streak freeze!');
+    });
+
+    const bonusLessonAd = useRewardedAd(AD_UNITS.bonusLesson, async () => {
+        setBonusLessonLoading(true);
+        await unlockBonusLesson();
+        await fetchOrGenerateLesson(2);
+        setBonusLessonLoading(false);
+        if (useLessonStore.getState().lesson) {
+            navigation.navigate('LessonReader');
+        } else {
+            Alert.alert('Error', 'Could not load bonus lesson. Try again later.');
+        }
+    });
 
     const scrollRef = useRef<ScrollView>(null);
 
@@ -137,9 +172,11 @@ export default function DashboardScreen() {
                     <View style={styles.statsRow}>
                         {/* Streak */}
                         <TouchableOpacity onPress={() => navigation.navigate('Leaderboard')} style={styles.statCard}>
-                            <Animated.Text style={[styles.statEmoji, { transform: [{ scale: pulseAnim }], opacity: fireOpacity }]}>
-                                🔥
-                            </Animated.Text>
+                            <Animated.View style={{ opacity: fireOpacity }}>
+                                <Animated.Text style={[styles.statEmoji, { transform: [{ scale: pulseAnim }] }]}>
+                                    🔥
+                                </Animated.Text>
+                            </Animated.View>
                             <Text style={styles.statValue}>{profile?.streak_count ?? 0}</Text>
                             <Text style={styles.statLabel}>Day Streak</Text>
                         </TouchableOpacity>
@@ -164,6 +201,20 @@ export default function DashboardScreen() {
                             <Text style={styles.statLabel}>Freezes</Text>
                         </View>
                     </View>
+
+                    {/* Ad: Watch for free freeze — once per day */}
+                    {canGetFreeze && !freezeWatchedToday && (
+                        <TouchableOpacity
+                            style={styles.adBanner}
+                            onPress={() => freezeAd.show()}
+                            disabled={!freezeAd.isLoaded}
+                            activeOpacity={0.85}
+                        >
+                            <Text style={styles.adBannerText}>
+                                {freezeAd.isLoaded ? '📺 Watch ad → +1 Freeze ❄️' : '⏳ Loading ad...'}
+                            </Text>
+                        </TouchableOpacity>
+                    )}
                 </LinearGradient>
 
                 <View style={styles.innerContent}>
@@ -195,6 +246,25 @@ export default function DashboardScreen() {
                             </Text>
                         </TouchableOpacity>
                     </View>
+
+                    {/* Ad: Bonus lesson (only after today's lesson is completed and not yet unlocked) */}
+                    {todayCompleted && !bonusAlreadyUnlocked && (
+                        <TouchableOpacity
+                            style={styles.bonusCard}
+                            onPress={() => bonusLessonAd.show()}
+                            disabled={!bonusLessonAd.isLoaded || bonusLessonLoading}
+                            activeOpacity={0.85}
+                        >
+                            <Text style={styles.bonusCardEmoji}>📺</Text>
+                            <View style={styles.bonusCardText}>
+                                <Text style={styles.bonusCardTitle}>Want more? Unlock a Bonus Lesson!</Text>
+                                <Text style={styles.bonusCardDesc}>
+                                    {bonusLessonLoading ? 'Loading your bonus lesson...' : bonusLessonAd.isLoaded ? 'Watch a short ad to unlock a second lesson today.' : 'Loading ad...'}
+                                </Text>
+                            </View>
+                            <Text style={styles.bonusCardArrow}>→</Text>
+                        </TouchableOpacity>
+                    )}
 
                     {/* Info Cards */}
                     <View style={styles.infoRow}>
@@ -472,5 +542,51 @@ const styles = StyleSheet.create({
         color: COLORS.textMedium,
         fontStyle: 'italic',
         paddingHorizontal: SPACING.md,
+    },
+    adBanner: {
+        marginTop: SPACING.sm,
+        backgroundColor: 'rgba(255,255,255,0.2)',
+        borderRadius: RADIUS.md,
+        paddingVertical: SPACING.sm,
+        paddingHorizontal: SPACING.md,
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.4)',
+    },
+    adBannerText: {
+        color: COLORS.white,
+        fontSize: FONTS.sizes.sm,
+        fontWeight: FONTS.weights.bold,
+    },
+    bonusCard: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: COLORS.white,
+        borderRadius: RADIUS.lg,
+        padding: SPACING.lg,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 6,
+        elevation: 2,
+        borderWidth: 2,
+        borderColor: `${COLORS.accent}40`,
+    },
+    bonusCardEmoji: { fontSize: 28, marginRight: SPACING.md },
+    bonusCardText: { flex: 1 },
+    bonusCardTitle: {
+        fontSize: FONTS.sizes.md,
+        fontWeight: FONTS.weights.bold,
+        color: COLORS.textDark,
+    },
+    bonusCardDesc: {
+        fontSize: FONTS.sizes.sm,
+        color: COLORS.textMedium,
+        marginTop: 2,
+    },
+    bonusCardArrow: {
+        fontSize: 20,
+        color: COLORS.textLight,
+        fontWeight: 'bold',
     },
 });

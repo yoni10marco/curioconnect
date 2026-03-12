@@ -29,7 +29,8 @@ export function buildLessonPairs(
  */
 export async function consumeFromQueue(
     userId: string,
-    todayStr: string
+    todayStr: string,
+    slot: 1 | 2 = 1
 ): Promise<DailyLesson | null> {
     // Get the next queued lesson (lowest queue_position)
     const { data: queued, error: fetchErr } = await supabase
@@ -56,6 +57,7 @@ export async function consumeFromQueue(
             interest_name: queuedLesson.interest_name,
             is_completed: false,
             created_at: todayStr,
+            lesson_slot: slot,
         })
         .select()
         .single();

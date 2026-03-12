@@ -2,7 +2,7 @@
     "expo": {
         "name": "CurioConnect",
         "slug": "curioconnect",
-        "version": "0.1.40",
+        "version": "0.1.41",
         "orientation": "portrait",
         "icon": "./assets/icon.png",
         "userInterfaceStyle": "light",
@@ -21,7 +21,9 @@
                 "backgroundColor": "#FFFFFF"
             },
             "package": "com.curioconnect.app",
-            "permissions": ["RECEIVE_BOOT_COMPLETED"]
+            "permissions": [
+                "RECEIVE_BOOT_COMPLETED"
+            ]
         },
         "plugins": [
             [
@@ -41,5 +43,9 @@
             "supabaseUrl": "https://anhfanmdotbzbpmimeem.supabase.co",
             "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFuaGZhbm1kb3RiemJwbWltZWVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI3MzU3ODksImV4cCI6MjA4ODMxMTc4OX0._mbaSi5F3zDZREyvvlLQ4ZxOzU5KiaXXiQz_b1_FD4A"
         }
+    },
+    "react-native-google-mobile-ads": {
+        "android_app_id": "ca-app-pub-3940256099942544~3347511713",
+        "ios_app_id": "ca-app-pub-3940256099942544~1458002511"
     }
 }

@@ -10,10 +10,11 @@ interface LessonState {
     lesson: DailyLesson | null;
     loading: boolean;
     error: string | null;
-    fetchOrGenerateLesson: () => Promise<void>;
+    fetchOrGenerateLesson: (slot?: 1 | 2) => Promise<void>;
     checkTodayLesson: () => Promise<void>;
     completeLesson: () => Promise<void>;
     resetLesson: () => void;
+    unlockBonusLesson: () => Promise<void>;
 }
 
 // Always ensure quiz_data is a parsed JS array, never a raw JSON string
@@ -37,6 +38,13 @@ export const useLessonStore = create<LessonState>((set) => ({
 
     resetLesson: () => set({ lesson: null, error: null }),
 
+    unlockBonusLesson: async () => {
+        const { updateProfile } = useAuthStore.getState();
+        const _d = new Date();
+        const todayStr = `${_d.getFullYear()}-${String(_d.getMonth() + 1).padStart(2, '0')}-${String(_d.getDate()).padStart(2, '0')}`;
+        await updateProfile({ bonus_lesson_date: todayStr });
+    },
+
     checkTodayLesson: async () => {
         let { session } = useAuthStore.getState();
         if (!session) {
@@ -52,6 +60,7 @@ export const useLessonStore = create<LessonState>((set) => ({
             .select('*')
             .eq('user_id', session.user.id)
             .eq('created_at', today)
+            .eq('lesson_slot', 1)
             .single();
 
         if (existing) {
@@ -59,7 +68,7 @@ export const useLessonStore = create<LessonState>((set) => ({
         }
     },
 
-    fetchOrGenerateLesson: async () => {
+    fetchOrGenerateLesson: async (slot: 1 | 2 = 1) => {
         set({ loading: true, error: null });
 
         let { session, profile } = useAuthStore.getState();
@@ -91,12 +100,13 @@ export const useLessonStore = create<LessonState>((set) => ({
         const _now = new Date();
         const today = `${_now.getFullYear()}-${String(_now.getMonth() + 1).padStart(2, '0')}-${String(_now.getDate()).padStart(2, '0')}`;
 
-        // 1. Check if lesson already exists for today
+        // 1. Check if lesson already exists for today (for this slot)
         const { data: existing } = await supabase
             .from('daily_lessons')
             .select('*')
             .eq('user_id', session.user.id)
             .eq('created_at', today)
+            .eq('lesson_slot', slot)
             .single();
 
         if (existing) {
@@ -106,7 +116,7 @@ export const useLessonStore = create<LessonState>((set) => ({
 
         // 2. Try to consume from the pre-generated lesson queue
         try {
-            const consumed = await consumeFromQueue(session.user.id, today);
+            const consumed = await consumeFromQueue(session.user.id, today, slot);
             if (consumed) {
                 set({ lesson: normalizeLesson(consumed), loading: false });
 
@@ -148,6 +158,7 @@ export const useLessonStore = create<LessonState>((set) => ({
                     access_token: accessToken,
                     difficulty_level: profile?.difficulty_level ?? 'adult',
                     force_new: false,
+                    lesson_slot: slot,
                 },
             });
 
