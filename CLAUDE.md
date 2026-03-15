@@ -132,8 +132,9 @@ Separate Next.js 14 app with Tailwind CSS and Supabase SSR.
 
 ### Design System
 Tokens defined in [src/lib/theme.ts](src/lib/theme.ts):
-- Primary: `#4A7FB5` (blue), Primary dark: `#2E5A8A`, Accent/XP: `#D4A574` (tan), Streak: `#E8878C` (rose), Danger: `#E85A5A`
-- Background: `#F5F0EB` (warm beige), Text dark: `#2E3A46`, Border: `#DDD5CC`
+- Primary: `#00D4FF` (electric cyan), Primary dark: `#0088CC`, Accent: `#FF6B35` (electric orange), XP: `#FFB800` (electric gold), Streak: `#FF3D71` (neon pink), Danger: `#FF3B30`
+- Background: `#F0F4F8` (cool off-white), Text dark: `#0F172A` (dark slate), Border: `#E2E8F0`
+- Icons use `Ionicons` from `@expo/vector-icons` instead of emojis for a cleaner look
 - Font sizes: xs (11) → title (34); weights: regular → heavy (800)
 - Spacing: xs (4px) → xxl (48px); border radius: sm (8) → full (9999)
 

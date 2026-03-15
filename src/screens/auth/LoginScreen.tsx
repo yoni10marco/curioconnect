@@ -77,7 +77,7 @@ export default function LoginScreen() {
 
     return (
         <LinearGradient
-            colors={['#4A7FB5', '#2E5A8A']}
+            colors={['#00D4FF', '#0066FF']}
             style={styles.gradient}
         >
             <KeyboardAvoidingView

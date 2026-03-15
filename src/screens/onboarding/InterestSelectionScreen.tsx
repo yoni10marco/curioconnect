@@ -9,6 +9,7 @@ import {
     ActivityIndicator,
     TextInput,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/theme';
 import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../store/useAuthStore';
@@ -23,10 +24,10 @@ const ALL_INTERESTS = [
 ];
 
 const LEVELS = [
-    { id: 'child', label: '🧒 Child', desc: 'Simple & Fun' },
-    { id: 'beginner', label: '🎓 High Schooler', desc: 'Beginner' },
-    { id: 'intermediate', label: '🏛️ College', desc: 'Intermediate' },
-    { id: 'advanced', label: '🧠 Expert', desc: 'Advanced' },
+    { id: 'child', label: 'Child', desc: 'Simple & Fun' },
+    { id: 'beginner', label: 'High Schooler', desc: 'Beginner' },
+    { id: 'intermediate', label: 'College', desc: 'Intermediate' },
+    { id: 'advanced', label: 'Expert', desc: 'Advanced' },
 ];
 
 export default function InterestSelectionScreen() {
@@ -137,7 +138,7 @@ export default function InterestSelectionScreen() {
                     <TouchableOpacity style={styles.backButton} onPress={signOut} activeOpacity={0.7}>
                         <Text style={styles.backButtonText}>← Back</Text>
                     </TouchableOpacity>
-                    <Text style={styles.emoji}>🛡️</Text>
+                    <Ionicons name="rocket" size={48} color={COLORS.white} />
                     <Text style={styles.title}>Set up your profile</Text>
                     <Text style={styles.subtitle}>
                         Tell us about yourself so we can personalize your learning experience.
@@ -146,7 +147,10 @@ export default function InterestSelectionScreen() {
 
                 {/* Username */}
                 <View style={styles.card}>
-                    <Text style={styles.cardTitle}>👤 Username</Text>
+                    <View style={styles.cardTitleRow}>
+                        <Ionicons name="person" size={18} color={COLORS.primary} />
+                        <Text style={styles.cardTitle}> Username</Text>
+                    </View>
                     <TextInput
                         style={styles.textInput}
                         placeholder="Choose a username"
@@ -160,7 +164,10 @@ export default function InterestSelectionScreen() {
                 {/* Referral code */}
                 {!profile?.referred_by_user_id && (
                     <View style={styles.card}>
-                        <Text style={styles.cardTitle}>🎁 Invite Code</Text>
+                        <View style={styles.cardTitleRow}>
+                            <Ionicons name="gift" size={18} color={COLORS.accent} />
+                            <Text style={styles.cardTitle}> Invite Code</Text>
+                        </View>
                         <Text style={styles.cardDesc}>Got an invite code from a friend? Enter it here.</Text>
                         <TextInput
                             style={styles.textInput}
@@ -175,7 +182,10 @@ export default function InterestSelectionScreen() {
 
                 {/* Level */}
                 <View style={styles.card}>
-                    <Text style={styles.cardTitle}>📚 I am a...</Text>
+                    <View style={styles.cardTitleRow}>
+                        <Ionicons name="book" size={18} color={COLORS.primary} />
+                        <Text style={styles.cardTitle}> I am a...</Text>
+                    </View>
                     <View style={styles.levelContainer}>
                         {LEVELS.map(l => (
                             <TouchableOpacity
@@ -193,7 +203,10 @@ export default function InterestSelectionScreen() {
 
                 {/* About you */}
                 <View style={styles.card}>
-                    <Text style={styles.cardTitle}>🙋 About You <Text style={styles.optional}>(Optional)</Text></Text>
+                    <View style={styles.cardTitleRow}>
+                        <Ionicons name="person-circle-outline" size={18} color={COLORS.primary} />
+                        <Text style={styles.cardTitle}> About You <Text style={styles.optional}>(Optional)</Text></Text>
+                    </View>
                     <TextInput
                         style={styles.textInput}
                         placeholder="Age (e.g., 25)"
@@ -213,7 +226,10 @@ export default function InterestSelectionScreen() {
 
                 {/* Interests */}
                 <View style={styles.card}>
-                    <Text style={styles.cardTitle}>❤️ Your Interests</Text>
+                    <View style={styles.cardTitleRow}>
+                        <Ionicons name="heart" size={18} color={COLORS.streak} />
+                        <Text style={styles.cardTitle}> Your Interests</Text>
+                    </View>
                     <Text style={styles.cardDesc}>Pick at least 2 to personalize your lessons.</Text>
                     <View style={styles.grid}>
                         {ALL_INTERESTS.map((interest) => {
@@ -311,11 +327,15 @@ const styles = StyleSheet.create({
         shadowRadius: 6,
         elevation: 2,
     },
+    cardTitleRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: SPACING.sm,
+    },
     cardTitle: {
         fontSize: FONTS.sizes.lg,
         fontWeight: FONTS.weights.bold,
         color: COLORS.textDark,
-        marginBottom: SPACING.sm,
     },
     cardDesc: {
         fontSize: FONTS.sizes.sm,

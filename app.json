@@ -8,7 +8,7 @@
         "userInterfaceStyle": "light",
         "splash": {
             "resizeMode": "contain",
-            "backgroundColor": "#4A7FB5"
+            "backgroundColor": "#00D4FF"
         },
         "ios": {
             "supportsTablet": true,
@@ -17,7 +17,7 @@
         "android": {
             "adaptiveIcon": {
                 "foregroundImage": "./assets/adaptive-icon.png",
-                "backgroundColor": "#F5F0EB"
+                "backgroundColor": "#F0F4F8"
             },
             "package": "com.curioconnect.app",
             "permissions": [
@@ -29,7 +29,7 @@
                 "expo-notifications",
                 {
                     "icon": "./assets/icon.png",
-                    "color": "#4A7FB5",
+                    "color": "#00D4FF",
                     "defaultChannel": "default"
                 }
             ]

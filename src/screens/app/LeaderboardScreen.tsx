@@ -1,18 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
+import { RouteProp } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/theme';
 import BottomNav from '../../components/BottomNav';
 import { supabase } from '../../lib/supabase';
 import { Profile } from '../../lib/types';
 import { useAuthStore } from '../../store/useAuthStore';
+import { AppStackParamList } from '../../navigation';
 
 type Tab = 'xp' | 'streak';
 
 export default function LeaderboardScreen() {
     const navigation = useNavigation();
+    const route = useRoute<RouteProp<AppStackParamList, 'Leaderboard'>>();
     const { session } = useAuthStore();
-    const [activeTab, setActiveTab] = useState<Tab>('xp');
+    const [activeTab, setActiveTab] = useState<Tab>(route.params?.initialTab ?? 'xp');
     const [leaders, setLeaders] = useState<Profile[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -57,7 +61,10 @@ export default function LeaderboardScreen() {
         <View style={styles.container}>
             {/* Header Area */}
             <View style={styles.header}>
-                <Text style={styles.headerTitle}>Leaderboard 🏆</Text>
+                <View style={styles.headerTitleRow}>
+                    <Ionicons name="trophy" size={28} color={COLORS.xp} />
+                    <Text style={styles.headerTitle}> Leaderboard</Text>
+                </View>
 
                 {/* Custom Segment Control */}
                 <View style={styles.segmentContainer}>
@@ -66,14 +73,20 @@ export default function LeaderboardScreen() {
                         onPress={() => setActiveTab('xp')}
                         activeOpacity={0.8}
                     >
-                        <Text style={[styles.segmentText, activeTab === 'xp' && styles.segmentTextActive]}>⭐ Total XP</Text>
+                        <View style={styles.segmentInner}>
+                            <Ionicons name="star" size={14} color={activeTab === 'xp' ? COLORS.xp : COLORS.textMedium} />
+                            <Text style={[styles.segmentText, activeTab === 'xp' && styles.segmentTextActive]}> Total XP</Text>
+                        </View>
                     </TouchableOpacity>
                     <TouchableOpacity
                         style={[styles.segmentBtn, activeTab === 'streak' && styles.segmentBtnActive]}
                         onPress={() => setActiveTab('streak')}
                         activeOpacity={0.8}
                     >
-                        <Text style={[styles.segmentText, activeTab === 'streak' && styles.segmentTextActive]}>🔥 Streak</Text>
+                        <View style={styles.segmentInner}>
+                            <Ionicons name="flame" size={14} color={activeTab === 'streak' ? COLORS.streak : COLORS.textMedium} />
+                            <Text style={[styles.segmentText, activeTab === 'streak' && styles.segmentTextActive]}> Streak</Text>
+                        </View>
                     </TouchableOpacity>
                 </View>
             </View>
@@ -136,11 +149,19 @@ const styles = StyleSheet.create({
         elevation: 3,
         zIndex: 10,
     },
+    headerTitleRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: SPACING.lg,
+    },
     headerTitle: {
         fontSize: FONTS.sizes.xxl,
         fontWeight: FONTS.weights.heavy,
         color: COLORS.textDark,
-        marginBottom: SPACING.lg,
+    },
+    segmentInner: {
+        flexDirection: 'row',
+        alignItems: 'center',
     },
     segmentContainer: {
         flexDirection: 'row',
@@ -186,7 +207,7 @@ const styles = StyleSheet.create({
         borderRadius: RADIUS.lg,
     },
     myRow: {
-        backgroundColor: '#E0EAF2', // light blue
+        backgroundColor: '#E8F7FF',
         borderWidth: 1,
         borderColor: COLORS.primary,
     },

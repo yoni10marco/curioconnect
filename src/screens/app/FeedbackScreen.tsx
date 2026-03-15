@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/theme';
 import { supabase } from '../../lib/supabase';
 
@@ -41,7 +42,7 @@ export default function FeedbackScreen() {
                     <View style={{ width: 44 }} />
                 </View>
                 <View style={styles.successContainer}>
-                    <Text style={styles.successEmoji}>💖</Text>
+                    <Ionicons name="heart-circle" size={72} color={COLORS.streak} />
                     <Text style={styles.successTitle}>Thank You!</Text>
                     <Text style={styles.successDesc}>Your feedback has been successfully sent. We really appreciate your input in helping us improve CurioConnect.</Text>
                     <TouchableOpacity style={styles.successButton} onPress={() => navigation.goBack()}>
@@ -68,7 +69,7 @@ export default function FeedbackScreen() {
 
             <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
                 <View style={styles.infoCard}>
-                    <Text style={styles.emoji}>💬</Text>
+                    <Ionicons name="chatbubble-ellipses-outline" size={48} color={COLORS.primary} />
                     <Text style={styles.infoTitle}>Help Us Improve</Text>
                     <Text style={styles.infoDesc}>
                         Have an idea, found a bug, or just want to tell us what you love? We read every single message.

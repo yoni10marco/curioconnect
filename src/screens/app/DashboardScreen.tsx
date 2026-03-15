@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/theme';
@@ -23,6 +24,9 @@ import { useRewardedAd } from '../../hooks/useRewardedAd';
 import { AD_UNITS, MAX_FREEZE } from '../../lib/ads';
 
 type Nav = NativeStackNavigationProp<AppStackParamList, 'Dashboard'>;
+
+const truncateName = (name: string, max = 12) =>
+    name.length > max ? name.slice(0, max) + '...' : name;
 
 export default function DashboardScreen() {
     const navigation = useNavigation<Nav>();
@@ -49,7 +53,7 @@ export default function DashboardScreen() {
         await AsyncStorage.setItem('freezeAdLastDate', todayStr);
         setFreezeWatchedToday(true);
         await addStreakFreeze();
-        Alert.alert('Freeze Added! ❄️', 'You earned +1 streak freeze!');
+        Alert.alert('Freeze Added!', 'You earned +1 streak freeze!');
     });
 
     const bonusLessonAd = useRewardedAd(AD_UNITS.bonusLesson, async () => {
@@ -144,7 +148,7 @@ export default function DashboardScreen() {
                 showsVerticalScrollIndicator={false}
             >
                 {/* Header */}
-                <LinearGradient colors={['#4A7FB5', '#2E5A8A']} style={styles.header}>
+                <LinearGradient colors={['#00D4FF', '#0066FF']} style={styles.header}>
                     {/* Version badge - top left */}
                     <View style={styles.versionRow}>
                         <View style={styles.versionBadge}>
@@ -153,24 +157,24 @@ export default function DashboardScreen() {
                     </View>
 
                     <View style={styles.headerContent}>
-                        <View>
-                            <Text style={styles.greeting}>
-                                Hey, {profile?.username ?? 'Learner'}! 👋
+                        <View style={styles.greetingContainer}>
+                            <Text style={styles.greeting} numberOfLines={1}>
+                                Hey, {truncateName(profile?.username ?? 'Learner')}!
                             </Text>
                             <Text style={styles.subGreeting}>
-                                {todayCompleted ? "I studied today! 🎯" : "Ready for today's mission?"}
+                                {todayCompleted ? "I studied today!" : "Ready for today's mission?"}
                             </Text>
                         </View>
                         <View style={styles.headerRightActions}>
-                            <TouchableOpacity onPress={() => navigation.navigate('News')} style={styles.actionBtn}>
-                                <Text style={styles.actionBtnText}>🔔</Text>
+                            <TouchableOpacity onPress={() => navigation.navigate('News')} style={[styles.actionBtn, styles.actionBtnNews]}>
+                                <Ionicons name="notifications-outline" size={20} color={COLORS.white} />
                                 {unreadNews > 0 && <View style={styles.badge} />}
                             </TouchableOpacity>
-                            <TouchableOpacity onPress={() => navigation.navigate('About')} style={styles.actionBtn}>
-                                <Text style={styles.actionBtnText}>ℹ️</Text>
+                            <TouchableOpacity onPress={() => navigation.navigate('About')} style={[styles.actionBtn, styles.actionBtnAbout]}>
+                                <Ionicons name="information-circle-outline" size={20} color={COLORS.white} />
                             </TouchableOpacity>
-                            <TouchableOpacity onPress={() => navigation.navigate('Profile')} style={styles.actionBtn}>
-                                <Text style={styles.actionBtnText}>👤</Text>
+                            <TouchableOpacity onPress={() => navigation.navigate('Profile')} style={[styles.actionBtn, styles.actionBtnProfile]}>
+                                <Ionicons name="person-outline" size={20} color={COLORS.white} />
                             </TouchableOpacity>
                         </View>
                     </View>
@@ -178,11 +182,11 @@ export default function DashboardScreen() {
                     {/* Stats Row */}
                     <View style={styles.statsRow}>
                         {/* Streak */}
-                        <TouchableOpacity onPress={() => navigation.navigate('Leaderboard')} style={styles.statCard}>
+                        <TouchableOpacity onPress={() => navigation.navigate('Leaderboard', { initialTab: 'streak' })} style={styles.statCard}>
                             <Animated.View style={{ opacity: fireOpacity }}>
-                                <Animated.Text style={[styles.statEmoji, { transform: [{ scale: pulseAnim }] }]}>
-                                    🔥
-                                </Animated.Text>
+                                <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
+                                    <Ionicons name="flame" size={28} color={COLORS.streak} />
+                                </Animated.View>
                             </Animated.View>
                             <Text style={styles.statValue}>{profile?.streak_count ?? 0}</Text>
                             <Text style={styles.statLabel}>Day Streak</Text>
@@ -192,8 +196,8 @@ export default function DashboardScreen() {
                         <View style={styles.statDivider} />
 
                         {/* XP */}
-                        <TouchableOpacity onPress={() => navigation.navigate('Leaderboard')} style={styles.statCard}>
-                            <Text style={styles.statEmoji}>⭐</Text>
+                        <TouchableOpacity onPress={() => navigation.navigate('Leaderboard', { initialTab: 'xp' })} style={styles.statCard}>
+                            <Ionicons name="star" size={28} color={COLORS.xp} />
                             <Text style={styles.statValue}>{profile?.total_xp ?? 0}</Text>
                             <Text style={styles.statLabel}>Total XP</Text>
                         </TouchableOpacity>
@@ -203,7 +207,7 @@ export default function DashboardScreen() {
 
                         {/* Streak Freeze */}
                         <View style={styles.statCard}>
-                            <Text style={styles.statEmoji}>❄️</Text>
+                            <Ionicons name="snow" size={28} color={COLORS.primaryLight} />
                             <Text style={styles.statValue}>{profile?.streak_freeze_count ?? 0}</Text>
                             <Text style={styles.statLabel}>Freezes</Text>
                         </View>
@@ -217,9 +221,12 @@ export default function DashboardScreen() {
                             disabled={!freezeAd.isLoaded}
                             activeOpacity={0.85}
                         >
-                            <Text style={styles.adBannerText}>
-                                {freezeAd.isLoaded ? '📺 Watch ad → +1 Freeze ❄️' : '⏳ Loading ad...'}
-                            </Text>
+                            <View style={styles.buttonInner}>
+                                <Ionicons name="tv-outline" size={14} color={COLORS.white} />
+                                <Text style={styles.adBannerText}>
+                                    {freezeAd.isLoaded ? ' Watch ad → +1 Freeze' : ' Loading ad...'}
+                                </Text>
+                            </View>
                         </TouchableOpacity>
                     )}
                 </LinearGradient>
@@ -228,13 +235,13 @@ export default function DashboardScreen() {
                     {/* Daily Mission Card */}
                     <View style={styles.missionCard}>
                         <View style={styles.missionIconRow}>
-                            <Text style={styles.missionIcon}>🎯</Text>
+                            <Ionicons name="locate" size={28} color={COLORS.primary} />
                             <View style={styles.missionBadge}>
                                 <Text style={styles.missionBadgeText}>DAILY MISSION</Text>
                             </View>
                         </View>
                         <Text style={styles.missionTitle}>
-                            {todayCompleted ? "Mission Complete! 🎉" : "Your personalized lesson awaits"}
+                            {todayCompleted ? "Mission Complete!" : "Your personalized lesson awaits"}
                         </Text>
                         <Text style={styles.missionDesc}>
                             {todayCompleted
@@ -248,9 +255,21 @@ export default function DashboardScreen() {
                             disabled={loading}
                             activeOpacity={0.85}
                         >
-                            <Text style={[styles.startButtonText, todayCompleted && styles.startButtonTextDone]}>
-                                {loading ? '⏳ Preparing...' : todayCompleted ? '🔄 Retry Lesson' : '🚀 Start Lesson'}
-                            </Text>
+                            <View style={styles.buttonInner}>
+                                {loading ? (
+                                    <Text style={[styles.startButtonText, todayCompleted && styles.startButtonTextDone]}>Preparing...</Text>
+                                ) : todayCompleted ? (
+                                    <>
+                                        <Ionicons name="refresh" size={18} color={COLORS.textDark} />
+                                        <Text style={[styles.startButtonText, styles.startButtonTextDone]}> Retry Lesson</Text>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Ionicons name="rocket" size={18} color={COLORS.white} />
+                                        <Text style={styles.startButtonText}> Start Lesson</Text>
+                                    </>
+                                )}
+                            </View>
                         </TouchableOpacity>
                     </View>
 
@@ -262,31 +281,31 @@ export default function DashboardScreen() {
                             disabled={!bonusLessonAd.isLoaded || bonusLessonLoading}
                             activeOpacity={0.85}
                         >
-                            <Text style={styles.bonusCardEmoji}>📺</Text>
+                            <Ionicons name="tv-outline" size={28} color={COLORS.accent} />
                             <View style={styles.bonusCardText}>
                                 <Text style={styles.bonusCardTitle}>Want more? Unlock a Bonus Lesson!</Text>
                                 <Text style={styles.bonusCardDesc}>
                                     {bonusLessonLoading ? 'Loading your bonus lesson...' : bonusLessonAd.isLoaded ? 'Watch a short ad to unlock a second lesson today.' : 'Loading ad...'}
                                 </Text>
                             </View>
-                            <Text style={styles.bonusCardArrow}>→</Text>
+                            <Ionicons name="chevron-forward" size={20} color={COLORS.textLight} />
                         </TouchableOpacity>
                     )}
 
                     {/* Info Cards */}
                     <View style={styles.infoRow}>
                         <TouchableOpacity onPress={() => navigation.navigate('KnowledgeLibrary')} activeOpacity={0.8} style={styles.infoCard}>
-                            <Text style={styles.infoEmoji}>📖</Text>
+                            <Ionicons name="book-outline" size={24} color={COLORS.primary} />
                             <Text style={styles.infoTitle}>Library</Text>
                             <Text style={styles.infoLabel}>View learned</Text>
                         </TouchableOpacity>
                         <View style={styles.infoCard}>
-                            <Text style={styles.infoEmoji}>🎓</Text>
+                            <Ionicons name="school-outline" size={24} color={COLORS.xp} />
                             <Text style={styles.infoTitle}>+30 XP</Text>
                             <Text style={styles.infoLabel}>Reward</Text>
                         </View>
                         <View style={styles.infoCard}>
-                            <Text style={styles.infoEmoji}>✅</Text>
+                            <Ionicons name="checkmark-circle" size={24} color="#22C55E" />
                             <Text style={styles.infoTitle}>+20 XP</Text>
                             <Text style={styles.infoLabel}>Per right answer</Text>
                         </View>
@@ -294,18 +313,18 @@ export default function DashboardScreen() {
 
                     {/* Send Feedback Button */}
                     <TouchableOpacity style={styles.feedbackCard} onPress={handleFeedback} activeOpacity={0.8}>
-                        <Text style={styles.feedbackEmoji}>💬</Text>
+                        <Ionicons name="chatbubble-outline" size={28} color={COLORS.primary} />
                         <View style={styles.feedbackTextCol}>
                             <Text style={styles.feedbackTitle}>Send Feedback</Text>
                             <Text style={styles.feedbackDesc}>Help us improve CurioConnect</Text>
                         </View>
-                        <Text style={styles.feedbackArrow}>→</Text>
+                        <Ionicons name="chevron-forward" size={20} color={COLORS.textLight} />
                     </TouchableOpacity>
 
                     {/* Motivational Footer */}
                     <Text style={styles.motivational}>
                         {(profile?.streak_count ?? 0) > 1
-                            ? `🔥 ${profile?.streak_count}-day streak! Keep it up!`
+                            ? `${profile?.streak_count}-day streak! Keep it up!`
                             : "Every expert was once a beginner. Start today!"}
                     </Text>
                 </View>
@@ -348,6 +367,10 @@ const styles = StyleSheet.create({
         alignItems: 'flex-start',
         marginBottom: SPACING.lg,
     },
+    greetingContainer: {
+        flex: 1,
+        marginRight: SPACING.sm,
+    },
     greeting: {
         fontSize: FONTS.sizes.xl,
         fontWeight: FONTS.weights.bold,
@@ -361,28 +384,34 @@ const styles = StyleSheet.create({
     headerRightActions: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: SPACING.md,
+        flexShrink: 0,
+        gap: SPACING.sm,
     },
     actionBtn: {
-        backgroundColor: 'rgba(255,255,255,0.2)',
-        width: 44,
-        height: 44,
-        borderRadius: 22,
+        width: 40,
+        height: 40,
+        borderRadius: 20,
         alignItems: 'center',
         justifyContent: 'center',
         position: 'relative',
     },
-    actionBtnText: {
-        fontSize: FONTS.sizes.lg,
+    actionBtnNews: {
+        backgroundColor: 'rgba(255, 184, 0, 0.35)',
+    },
+    actionBtnAbout: {
+        backgroundColor: 'rgba(102, 229, 255, 0.35)',
+    },
+    actionBtnProfile: {
+        backgroundColor: 'rgba(255, 61, 113, 0.35)',
     },
     badge: {
         position: 'absolute',
-        top: 10,
-        right: 12,
+        top: 8,
+        right: 8,
         width: 10,
         height: 10,
         borderRadius: 5,
-        backgroundColor: '#FF3B30',
+        backgroundColor: COLORS.danger,
     },
     statsRow: {
         flexDirection: 'row',
@@ -392,11 +421,11 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     statCard: { flex: 1, alignItems: 'center' },
-    statEmoji: { fontSize: 28, marginBottom: 4 },
     statValue: {
         fontSize: FONTS.sizes.xxl,
         fontWeight: FONTS.weights.heavy,
         color: COLORS.white,
+        marginTop: 4,
     },
     statLabel: {
         fontSize: FONTS.sizes.xs,
@@ -429,7 +458,6 @@ const styles = StyleSheet.create({
         gap: SPACING.sm,
         marginBottom: SPACING.sm,
     },
-    missionIcon: { fontSize: 28 },
     missionBadge: {
         backgroundColor: `${COLORS.primary}20`,
         borderRadius: RADIUS.full,
@@ -472,6 +500,11 @@ const styles = StyleSheet.create({
         shadowOpacity: 0,
         elevation: 0,
     },
+    buttonInner: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
     startButtonText: {
         color: COLORS.white,
         fontSize: FONTS.sizes.lg,
@@ -497,11 +530,11 @@ const styles = StyleSheet.create({
         shadowRadius: 6,
         elevation: 2,
     },
-    infoEmoji: { fontSize: 24, marginBottom: 4 },
     infoTitle: {
         fontSize: FONTS.sizes.lg,
         fontWeight: FONTS.weights.bold,
         color: COLORS.textDark,
+        marginTop: 4,
     },
     infoLabel: {
         fontSize: FONTS.sizes.xs,
@@ -515,15 +548,12 @@ const styles = StyleSheet.create({
         backgroundColor: COLORS.white,
         borderRadius: RADIUS.lg,
         padding: SPACING.lg,
+        gap: SPACING.md,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.05,
         shadowRadius: 6,
         elevation: 2,
-    },
-    feedbackEmoji: {
-        fontSize: 28,
-        marginRight: SPACING.md,
     },
     feedbackTextCol: {
         flex: 1,
@@ -537,11 +567,6 @@ const styles = StyleSheet.create({
         fontSize: FONTS.sizes.sm,
         color: COLORS.textMedium,
         marginTop: 2,
-    },
-    feedbackArrow: {
-        fontSize: 20,
-        color: COLORS.textLight,
-        fontWeight: 'bold',
     },
     motivational: {
         textAlign: 'center',
@@ -571,6 +596,7 @@ const styles = StyleSheet.create({
         backgroundColor: COLORS.white,
         borderRadius: RADIUS.lg,
         padding: SPACING.lg,
+        gap: SPACING.md,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.05,
@@ -579,7 +605,6 @@ const styles = StyleSheet.create({
         borderWidth: 2,
         borderColor: `${COLORS.accent}40`,
     },
-    bonusCardEmoji: { fontSize: 28, marginRight: SPACING.md },
     bonusCardText: { flex: 1 },
     bonusCardTitle: {
         fontSize: FONTS.sizes.md,
@@ -590,10 +615,5 @@ const styles = StyleSheet.create({
         fontSize: FONTS.sizes.sm,
         color: COLORS.textMedium,
         marginTop: 2,
-    },
-    bonusCardArrow: {
-        fontSize: 20,
-        color: COLORS.textLight,
-        fontWeight: 'bold',
     },
 });

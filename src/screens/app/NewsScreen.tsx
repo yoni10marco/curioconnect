@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/theme';
 import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../store/useAuthStore';
@@ -74,7 +75,10 @@ export default function NewsScreen() {
     return (
         <View style={styles.container}>
             <View style={styles.header}>
-                <Text style={styles.headerTitle}>Curio News 🔔</Text>
+                <View style={styles.headerTitleRow}>
+                    <Ionicons name="megaphone" size={24} color={COLORS.primary} />
+                    <Text style={styles.headerTitle}> Curio News</Text>
+                </View>
                 <Text style={styles.headerSub}>Latest updates & broadcasts</Text>
             </View>
 
@@ -86,7 +90,7 @@ export default function NewsScreen() {
                 <ScrollView ref={scrollRef} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
                     {messages.length === 0 ? (
                         <View style={styles.emptyState}>
-                            <Text style={styles.emptyEmoji}>📭</Text>
+                            <Ionicons name="mail-open-outline" size={48} color={COLORS.textLight} />
                             <Text style={styles.emptyTitle}>No news right now</Text>
                             <Text style={styles.emptySub}>Check back later for updates!</Text>
                         </View>
@@ -142,6 +146,7 @@ const styles = StyleSheet.create({
         elevation: 3,
         zIndex: 10,
     },
+    headerTitleRow: { flexDirection: 'row', alignItems: 'center' },
     headerTitle: { fontSize: FONTS.sizes.xxl, fontWeight: FONTS.weights.heavy, color: COLORS.textDark },
     headerSub: { fontSize: FONTS.sizes.md, color: COLORS.textMedium, marginTop: 4 },
     center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
@@ -164,7 +169,7 @@ const styles = StyleSheet.create({
     },
     unreadCard: {
         borderLeftColor: COLORS.primary,
-        backgroundColor: '#F5F8FB',
+        backgroundColor: '#F0F9FF',
     },
     cardHeaderRow: {
         flexDirection: 'row',

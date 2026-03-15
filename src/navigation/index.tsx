@@ -34,7 +34,7 @@ export type AppStackParamList = {
     Dashboard: undefined;
     LessonReader: undefined;
     Profile: undefined;
-    Leaderboard: undefined;
+    Leaderboard: { initialTab?: 'xp' | 'streak' } | undefined;
     LearningJourney: undefined;
     KnowledgeLibrary: undefined;
     About: undefined;
@@ -69,7 +69,7 @@ function AppNavigator() {
                 headerStyle: { backgroundColor: COLORS.white },
                 headerTintColor: COLORS.primary,
                 headerTitleStyle: { fontWeight: '700', color: COLORS.textDark },
-                animation: 'none', // Tab-like instant switching
+                animation: 'none',
             }}
         >
             <AppStack.Screen

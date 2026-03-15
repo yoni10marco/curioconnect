@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Linking, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/theme';
 import { APP_VERSION } from '../../lib/version';
 
@@ -56,7 +57,7 @@ export default function AboutScreen() {
 
                     <TouchableOpacity style={styles.contactRow} onPress={handleEmail} activeOpacity={0.7}>
                         <View style={styles.contactIconBox}>
-                            <Text style={styles.contactIcon}>✉️</Text>
+                            <Ionicons name="mail" size={22} color={COLORS.primary} />
                         </View>
                         <View>
                             <Text style={styles.contactLabel}>Email Us</Text>
@@ -65,8 +66,8 @@ export default function AboutScreen() {
                     </TouchableOpacity>
 
                     <TouchableOpacity style={styles.contactRow} onPress={handleInstagram} activeOpacity={0.7}>
-                        <View style={[styles.contactIconBox, { backgroundColor: '#F5E0E2' }]}>
-                            <Text style={styles.contactIcon}>📸</Text>
+                        <View style={[styles.contactIconBox, { backgroundColor: '#FFE8EC' }]}>
+                            <Ionicons name="logo-instagram" size={22} color={COLORS.streak} />
                         </View>
                         <View>
                             <Text style={styles.contactLabel}>Instagram</Text>
@@ -76,7 +77,7 @@ export default function AboutScreen() {
                 </View>
 
                 {/* Footer text */}
-                <Text style={styles.footerText}>Made with ❤️ for curious minds.</Text>
+                <Text style={styles.footerText}>Made with love for curious minds.</Text>
             </ScrollView>
         </View>
     );
@@ -175,7 +176,7 @@ const styles = StyleSheet.create({
         width: 48,
         height: 48,
         borderRadius: 24,
-        backgroundColor: '#E8DDD3',
+        backgroundColor: '#E8F7FF',
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: SPACING.md,

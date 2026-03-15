@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/theme';
 import BottomNav from '../../components/BottomNav';
 
@@ -10,7 +11,7 @@ export default function LearningJourneyScreen() {
     return (
         <View style={styles.container}>
             <View style={styles.content}>
-                <Text style={styles.emoji}>🗺️</Text>
+                <Ionicons name="compass-outline" size={64} color={COLORS.primary} />
                 <Text style={styles.title}>Learning Journey</Text>
                 <View style={styles.comingSoonBadge}>
                     <Text style={styles.comingSoonText}>Coming Soon</Text>
@@ -62,14 +63,14 @@ const styles = StyleSheet.create({
         marginBottom: SPACING.sm,
     },
     comingSoonBadge: {
-        backgroundColor: '#E0EAF2', // Light Blue
+        backgroundColor: '#E8F7FF',
         paddingHorizontal: SPACING.md,
         paddingVertical: 6,
         borderRadius: RADIUS.full,
         marginBottom: SPACING.lg,
     },
     comingSoonText: {
-        color: '#2E5A8A', // Blue
+        color: '#0088CC',
         fontSize: FONTS.sizes.sm,
         fontWeight: FONTS.weights.bold,
         textTransform: 'uppercase',

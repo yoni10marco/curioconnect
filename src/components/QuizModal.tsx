@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 
 // Haptics are native-only — safe no-op on web
 const triggerHaptic = async (type: 'success' | 'error') => {
@@ -38,7 +39,7 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 // ──────────────────────────────────────────
 // Sparkle Particle Component (correct answer)
 // ──────────────────────────────────────────
-const SPARKLE_COLORS = ['#FFD700', '#4A7FB5', '#E8878C', '#D4A574', '#7BA3CC', '#FFFFFF'];
+const SPARKLE_COLORS = ['#FFD700', '#00D4FF', '#FF3D71', '#FF6B35', '#66E5FF', '#FFFFFF'];
 
 function SparkleEffect({ active }: { active: boolean }) {
     const particles = useRef(
@@ -110,7 +111,7 @@ function SparkleEffect({ active }: { active: boolean }) {
 // ──────────────────────────────────────────
 // Confetti Component (lesson completion)
 // ──────────────────────────────────────────
-const CONFETTI_COLORS = ['#FFD700', '#4A7FB5', '#E8878C', '#D4A574', '#2E5A8A', '#7BA3CC', '#FF6B6B', '#50C878'];
+const CONFETTI_COLORS = ['#FFD700', '#00D4FF', '#FF3D71', '#FF6B35', '#0088CC', '#66E5FF', '#FF6B6B', '#50C878'];
 
 function ConfettiEffect({ active }: { active: boolean }) {
     const pieces = useRef(
@@ -209,7 +210,7 @@ function ShimmerButton({ label, onPress, style }: { label: string; onPress: () =
         <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
             <TouchableOpacity onPress={onPress} activeOpacity={0.85} style={[styles.doneButton, style]}>
                 <LinearGradient
-                    colors={['#4A7FB5', '#2E5A8A', '#4A7FB5']}
+                    colors={['#00D4FF', '#0066FF', '#00D4FF']}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 0 }}
                     style={StyleSheet.absoluteFill}
@@ -461,7 +462,10 @@ export default function QuizModal({ visible, questions, isFinalPage, onClose, on
                     </TouchableOpacity>
                     <Text style={styles.headerTitle}>Knowledge Check</Text>
                     <View style={styles.scoreChip}>
-                        <Text style={styles.scoreChipText}>⭐ {score}/{questions.length}</Text>
+                        <View style={styles.scoreChipInner}>
+                            <Ionicons name="star" size={14} color={COLORS.xp} />
+                            <Text style={styles.scoreChipText}> {score}/{questions.length}</Text>
+                        </View>
                     </View>
                 </View>
 
@@ -495,7 +499,7 @@ export default function QuizModal({ visible, questions, isFinalPage, onClose, on
 
                             {isFinalPage ? (
                                 <LinearGradient
-                                    colors={['#FFD700', '#E8878C', '#4A7FB5']}
+                                    colors={['#FFB800', '#FF3D71', '#00D4FF']}
                                     start={{ x: 0, y: 0 }}
                                     end={{ x: 1, y: 1 }}
                                     style={styles.completionBadge}
@@ -572,7 +576,7 @@ export default function QuizModal({ visible, questions, isFinalPage, onClose, on
 
                         {!question ? (
                             <ScrollView contentContainerStyle={styles.results} showsVerticalScrollIndicator={false}>
-                                <Text style={styles.resultsEmoji}>😕</Text>
+                                <Ionicons name="alert-circle-outline" size={80} color={COLORS.textLight} style={{ marginBottom: SPACING.lg }} />
                                 <Text style={styles.resultsTitle}>Quiz data error</Text>
                                 <TouchableOpacity style={styles.doneButton} onPress={onClose}>
                                     <Text style={styles.doneButtonText}>Close</Text>
@@ -633,9 +637,16 @@ export default function QuizModal({ visible, questions, isFinalPage, onClose, on
                                                 style={[StyleSheet.absoluteFill, { borderRadius: RADIUS.xl }]}
                                             />
                                         ) : null}
-                                        <Text style={[styles.feedbackText, answerState === 'correct' && styles.feedbackTextCorrect]}>
-                                            {answerState === 'correct' ? '✅ Correct! Well done!' : `❌ The correct answer was: ${correctAnswerStr}`}
-                                        </Text>
+                                        <View style={styles.feedbackRow}>
+                                            <Ionicons
+                                                name={answerState === 'correct' ? 'checkmark-circle' : 'close-circle'}
+                                                size={22}
+                                                color={answerState === 'correct' ? '#22C55E' : COLORS.danger}
+                                            />
+                                            <Text style={[styles.feedbackText, answerState === 'correct' && styles.feedbackTextCorrect]}>
+                                                {answerState === 'correct' ? ' Correct! Well done!' : ` The correct answer was: ${correctAnswerStr}`}
+                                            </Text>
+                                        </View>
                                         <TouchableOpacity
                                             style={[styles.nextButton, answerState === 'correct' && styles.nextButtonCorrect]}
                                             onPress={handleNext}
@@ -687,10 +698,14 @@ const styles = StyleSheet.create({
         paddingHorizontal: SPACING.sm,
         paddingVertical: 4,
     },
+    scoreChipInner: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
     scoreChipText: {
         fontSize: FONTS.sizes.sm,
         fontWeight: FONTS.weights.bold,
-        color: '#8B6F47',
+        color: COLORS.accentOrange,
     },
     progressDots: {
         flexDirection: 'row',
@@ -782,11 +797,16 @@ const styles = StyleSheet.create({
     },
     feedbackCorrect: { backgroundColor: '#50C87815' },
     feedbackWrong: { backgroundColor: `${COLORS.danger}10` },
+    feedbackRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: SPACING.sm,
+    },
     feedbackText: {
         fontSize: FONTS.sizes.md,
         color: COLORS.textDark,
         fontWeight: FONTS.weights.medium,
-        marginBottom: SPACING.md,
+        flex: 1,
     },
     feedbackTextCorrect: {
         color: '#2E7D32',

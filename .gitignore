@@ -38,3 +38,10 @@ web-build/
 
 # Dev notes (local only)
 DEV_NOTES.md
+
+# APK builds
+*.apk
+
+# Skills
+skills-lock.json
+.agents/

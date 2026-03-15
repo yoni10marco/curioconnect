@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../store/useAuthStore';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/theme';
@@ -55,7 +56,7 @@ export default function KnowledgeLibraryScreen() {
                 </View>
             ) : lessons.length === 0 ? (
                 <View style={styles.centerBox}>
-                    <Text style={styles.emptyEmoji}>📚</Text>
+                    <Ionicons name="library-outline" size={64} color={COLORS.textLight} />
                     <Text style={styles.emptyTitle}>Your library is empty</Text>
                     <Text style={styles.emptyDesc}>
                         Complete your daily missions to build up your knowledge base.
@@ -66,7 +67,7 @@ export default function KnowledgeLibraryScreen() {
                     {lessons.map((lesson) => (
                         <View key={lesson.id} style={styles.lessonCard}>
                             <View style={styles.lessonIconBox}>
-                                <Text style={styles.lessonIcon}>🏆</Text>
+                                <Ionicons name="checkmark-circle" size={24} color={COLORS.primary} />
                             </View>
                             <View style={styles.lessonInfo}>
                                 <Text style={styles.lessonTitle}>{lesson.title}</Text>
@@ -149,7 +150,7 @@ const styles = StyleSheet.create({
         width: 48,
         height: 48,
         borderRadius: 24,
-        backgroundColor: '#E8DDD3',
+        backgroundColor: '#E8F7FF',
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: SPACING.md,
@@ -171,13 +172,13 @@ const styles = StyleSheet.create({
         color: COLORS.textMedium,
     },
     xpBadge: {
-        backgroundColor: '#E0EAF2', // Light blue
+        backgroundColor: '#E8F7FF',
         paddingHorizontal: SPACING.sm,
         paddingVertical: 4,
         borderRadius: RADIUS.full,
     },
     xpText: {
-        color: '#2E5A8A', // Dark blue
+        color: '#0088CC',
         fontSize: FONTS.sizes.xs,
         fontWeight: FONTS.weights.bold,
     },

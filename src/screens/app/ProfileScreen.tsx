@@ -10,6 +10,7 @@ import {
     TextInput,
     Clipboard,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/theme';
 import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../store/useAuthStore';
@@ -261,9 +262,18 @@ export default function ProfileScreen() {
                 <View style={styles.headerCard}>
                     <Text style={styles.username}>{profile?.username ?? 'Learner'}</Text>
                     <View style={styles.statsRow}>
-                        <Text style={styles.statItem}>⭐ {profile?.total_xp ?? 0} XP</Text>
-                        <Text style={styles.statItem}>🔥 {profile?.streak_count ?? 0} Day Streak</Text>
-                        <Text style={styles.statItem}>🧊 {profile?.streak_freeze_count ?? 0} Freeze</Text>
+                        <View style={styles.statItemRow}>
+                            <Ionicons name="star" size={16} color={COLORS.xp} />
+                            <Text style={styles.statItem}> {profile?.total_xp ?? 0} XP</Text>
+                        </View>
+                        <View style={styles.statItemRow}>
+                            <Ionicons name="flame" size={16} color={COLORS.streak} />
+                            <Text style={styles.statItem}> {profile?.streak_count ?? 0} Day Streak</Text>
+                        </View>
+                        <View style={styles.statItemRow}>
+                            <Ionicons name="snow" size={16} color={COLORS.primaryLight} />
+                            <Text style={styles.statItem}> {profile?.streak_freeze_count ?? 0} Freeze</Text>
+                        </View>
                     </View>
                 </View>
 
@@ -294,13 +304,16 @@ export default function ProfileScreen() {
                         onChangeText={setJobInput}
                     />
 
-                    <Text style={[styles.cardTitle, { marginTop: SPACING.md, marginBottom: SPACING.sm }]}>📚 Lesson Difficulty</Text>
+                    <View style={[styles.cardTitleRow, { marginTop: SPACING.md, marginBottom: SPACING.sm }]}>
+                        <Ionicons name="book" size={18} color={COLORS.primary} />
+                        <Text style={styles.cardTitle}> Lesson Difficulty</Text>
+                    </View>
                     <View style={styles.levelContainer}>
                         {[
-                            { id: 'child', label: '🧒 Child', desc: 'Simple' },
-                            { id: 'beginner', label: '🎓 High School', desc: 'Beginner' },
-                            { id: 'intermediate', label: '🏛️ College', desc: 'Intermediate' },
-                            { id: 'advanced', label: '🧠 Expert', desc: 'Advanced' },
+                            { id: 'child', label: 'Child', desc: 'Simple' },
+                            { id: 'beginner', label: 'High School', desc: 'Beginner' },
+                            { id: 'intermediate', label: 'College', desc: 'Intermediate' },
+                            { id: 'advanced', label: 'Expert', desc: 'Advanced' },
                         ].map(l => (
                             <TouchableOpacity
                                 key={l.id}
@@ -318,7 +331,10 @@ export default function ProfileScreen() {
                 {/* AI Prompt */}
                 <View style={styles.card}>
                     <View style={styles.cardHeader}>
-                        <Text style={styles.cardTitle}>✨ AI Discover Interests</Text>
+                        <View style={styles.cardTitleRow}>
+                            <Ionicons name="sparkles" size={18} color={COLORS.xp} />
+                            <Text style={styles.cardTitle}> AI Discover Interests</Text>
+                        </View>
                         <Text style={[styles.cardDesc, { marginBottom: 0, fontWeight: FONTS.weights.bold, color: discoverUsed >= discoverLimit ? COLORS.danger : COLORS.textMedium }]}>
                             {discoverLimit - discoverUsed} / {discoverLimit} left
                         </Text>
@@ -342,7 +358,7 @@ export default function ProfileScreen() {
                         {aiLoading ? (
                             <ActivityIndicator color={COLORS.white} size="small" />
                         ) : (
-                            <Text style={styles.aiBtnText}>✨ Discover Interests</Text>
+                            <Text style={styles.aiBtnText}>Discover Interests</Text>
                         )}
                     </TouchableOpacity>
                 </View>
@@ -378,7 +394,7 @@ export default function ProfileScreen() {
                                 if (customInterests.length === 0) return null;
                                 return (
                                     <>
-                                        <Text style={styles.cardSubtitle}>✨ AI Discovered</Text>
+                                        <Text style={styles.cardSubtitle}>AI Discovered</Text>
                                         <View style={styles.grid}>
                                             {customInterests.map((interest) => (
                                                 <TouchableOpacity
@@ -415,7 +431,10 @@ export default function ProfileScreen() {
                 {/* Refer a Friend */}
                 {profile?.referral_code && (
                     <View style={styles.card}>
-                        <Text style={styles.cardTitle}>🎁 Invite a Friend</Text>
+                        <View style={styles.cardTitleRow}>
+                            <Ionicons name="gift" size={18} color={COLORS.accent} />
+                            <Text style={styles.cardTitle}> Invite a Friend</Text>
+                        </View>
                         <Text style={styles.cardDesc}>
                             Share your code — when a friend signs up and completes their first lesson, you both get +100 XP and +1 streak freeze!
                         </Text>
@@ -459,7 +478,9 @@ const styles = StyleSheet.create({
     username: { fontSize: FONTS.sizes.xl, fontWeight: FONTS.weights.bold, color: COLORS.textDark, marginBottom: 4 },
     stats: { fontSize: FONTS.sizes.md, color: COLORS.textMedium, fontWeight: FONTS.weights.medium },
     statsRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: SPACING.sm, marginTop: 4 },
+    statItemRow: { flexDirection: 'row', alignItems: 'center' },
     statItem: { fontSize: FONTS.sizes.md, color: COLORS.textMedium, fontWeight: FONTS.weights.medium },
+    cardTitleRow: { flexDirection: 'row', alignItems: 'center', marginBottom: SPACING.xs },
     bioText: { fontSize: FONTS.sizes.sm, color: COLORS.primary, fontWeight: FONTS.weights.bold, marginTop: 4 },
     card: {
         backgroundColor: COLORS.white,
@@ -471,8 +492,8 @@ const styles = StyleSheet.create({
     cardTitle: { fontSize: FONTS.sizes.lg, fontWeight: FONTS.weights.bold, color: COLORS.textDark, marginBottom: SPACING.xs },
     cardDesc: { fontSize: FONTS.sizes.sm, color: COLORS.textMedium, marginBottom: SPACING.md, lineHeight: 20 },
     cardSubtitle: { fontSize: FONTS.sizes.sm, fontWeight: FONTS.weights.bold, color: COLORS.textMedium, marginTop: SPACING.md, marginBottom: SPACING.sm },
-    comingSoonBadge: { backgroundColor: '#E0EAF2', paddingHorizontal: 8, paddingVertical: 4, borderRadius: RADIUS.full },
-    comingSoonText: { color: '#2E5A8A', fontSize: FONTS.sizes.xs, fontWeight: FONTS.weights.bold, textTransform: 'uppercase' },
+    comingSoonBadge: { backgroundColor: '#E8F7FF', paddingHorizontal: 8, paddingVertical: 4, borderRadius: RADIUS.full },
+    comingSoonText: { color: '#0088CC', fontSize: FONTS.sizes.xs, fontWeight: FONTS.weights.bold, textTransform: 'uppercase' },
     disabledInput: {
         backgroundColor: COLORS.background,
         borderWidth: 1,

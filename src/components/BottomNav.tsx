@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { Ionicons } from '@expo/vector-icons';
 import { AppStackParamList } from '../navigation';
 import { COLORS, FONTS, SPACING } from '../lib/theme';
 
@@ -11,12 +12,12 @@ interface Props {
     currentRoute: RouteName;
 }
 
-const TABS: { name: RouteName; label: string; emoji: string }[] = [
-    { name: 'Dashboard', label: 'Home', emoji: '🏠' },
-    { name: 'LearningJourney', label: 'Journey', emoji: '🗺️' },
-    { name: 'KnowledgeLibrary', label: 'Library', emoji: '📚' },
-    { name: 'Leaderboard', label: 'Leaderboard', emoji: '🏆' },
-    { name: 'Profile', label: 'Profile', emoji: '👤' },
+const TABS: { name: RouteName; label: string; icon: keyof typeof Ionicons.glyphMap; iconActive: keyof typeof Ionicons.glyphMap }[] = [
+    { name: 'Dashboard', label: 'Home', icon: 'home-outline', iconActive: 'home' },
+    { name: 'LearningJourney', label: 'Journey', icon: 'compass-outline', iconActive: 'compass' },
+    { name: 'KnowledgeLibrary', label: 'Library', icon: 'library-outline', iconActive: 'library' },
+    { name: 'Leaderboard', label: 'Ranks', icon: 'trophy-outline', iconActive: 'trophy' },
+    { name: 'Profile', label: 'Profile', icon: 'person-outline', iconActive: 'person' },
 ];
 
 export default function BottomNav({ currentRoute }: Props) {
@@ -37,9 +38,12 @@ export default function BottomNav({ currentRoute }: Props) {
                         }}
                         activeOpacity={0.7}
                     >
-                        <Text style={[styles.emoji, isActive && styles.activeEmoji]}>
-                            {tab.emoji}
-                        </Text>
+                        <Ionicons
+                            name={isActive ? tab.iconActive : tab.icon}
+                            size={24}
+                            color={isActive ? COLORS.primary : COLORS.textLight}
+                            style={styles.icon}
+                        />
                         <Text style={[styles.label, isActive && styles.activeLabel]}>
                             {tab.label}
                         </Text>
@@ -56,7 +60,7 @@ const styles = StyleSheet.create({
         backgroundColor: COLORS.white,
         borderTopWidth: 1,
         borderTopColor: COLORS.border,
-        paddingBottom: 24, // Safe area padding for iOS
+        paddingBottom: 24,
         paddingTop: SPACING.md,
     },
     tab: {
@@ -64,13 +68,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
     },
-    emoji: {
-        fontSize: 24,
-        opacity: 0.5,
+    icon: {
         marginBottom: 2,
-    },
-    activeEmoji: {
-        opacity: 1.0,
     },
     label: {
         fontSize: 10,
