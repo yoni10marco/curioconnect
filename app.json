@@ -2,7 +2,7 @@
     "expo": {
         "name": "CurioConnect",
         "slug": "curioconnect",
-        "version": "0.1.41",
+        "version": "1.0.0",
         "orientation": "portrait",
         "icon": "./assets/icon.png",
         "userInterfaceStyle": "light",
@@ -20,6 +20,7 @@
                 "backgroundColor": "#F0F4F8"
             },
             "package": "com.curioconnect.app",
+            "versionCode": 1,
             "permissions": [
                 "RECEIVE_BOOT_COMPLETED"
             ]

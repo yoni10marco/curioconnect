@@ -17,7 +17,6 @@ import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/theme';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useLessonStore } from '../../store/useLessonStore';
 import { AppStackParamList } from '../../navigation';
-import { APP_VERSION } from '../../lib/version';
 import BottomNav from '../../components/BottomNav';
 import { supabase } from '../../lib/supabase';
 import { useRewardedAd } from '../../hooks/useRewardedAd';
@@ -149,13 +148,6 @@ export default function DashboardScreen() {
             >
                 {/* Header */}
                 <LinearGradient colors={['#00D4FF', '#0066FF']} style={styles.header}>
-                    {/* Version badge - top left */}
-                    <View style={styles.versionRow}>
-                        <View style={styles.versionBadge}>
-                            <Text style={styles.versionText}>v{APP_VERSION}</Text>
-                        </View>
-                    </View>
-
                     <View style={styles.headerContent}>
                         <View style={styles.greetingContainer}>
                             <Text style={styles.greeting} numberOfLines={1}>
@@ -344,22 +336,6 @@ const styles = StyleSheet.create({
         borderBottomLeftRadius: RADIUS.xl,
         borderBottomRightRadius: RADIUS.xl,
         overflow: 'hidden',
-    },
-    versionRow: {
-        flexDirection: 'row',
-        marginBottom: SPACING.xs,
-    },
-    versionBadge: {
-        backgroundColor: 'rgba(255,255,255,0.2)',
-        borderRadius: RADIUS.full,
-        paddingHorizontal: SPACING.sm,
-        paddingVertical: 2,
-    },
-    versionText: {
-        fontSize: FONTS.sizes.xs,
-        color: 'rgba(255,255,255,0.8)',
-        fontWeight: FONTS.weights.medium,
-        letterSpacing: 0.5,
     },
     headerContent: {
         flexDirection: 'row',

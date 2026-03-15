@@ -9,11 +9,19 @@ export default function AboutScreen() {
     const navigation = useNavigation();
 
     const handleEmail = () => {
-        Linking.openURL('mailto:contact@curioconnect.app');
+        Linking.openURL('mailto:curioconnecforyou@gmail.com');
     };
 
     const handleInstagram = () => {
         Linking.openURL('https://instagram.com/curioconnect');
+    };
+
+    const handlePrivacyPolicy = () => {
+        Linking.openURL('https://yoni10marco.github.io/curioconnect/privacy-policy.html');
+    };
+
+    const handleTermsOfService = () => {
+        Linking.openURL('https://yoni10marco.github.io/curioconnect/terms-of-service.html');
     };
 
     return (
@@ -61,7 +69,7 @@ export default function AboutScreen() {
                         </View>
                         <View>
                             <Text style={styles.contactLabel}>Email Us</Text>
-                            <Text style={styles.contactValue}>contact@curioconnect.app</Text>
+                            <Text style={styles.contactValue}>curioconnecforyou@gmail.com</Text>
                         </View>
                     </TouchableOpacity>
 
@@ -72,6 +80,29 @@ export default function AboutScreen() {
                         <View>
                             <Text style={styles.contactLabel}>Instagram</Text>
                             <Text style={styles.contactValue}>@curioconnect</Text>
+                        </View>
+                    </TouchableOpacity>
+                </View>
+
+                {/* Legal */}
+                <View style={styles.card}>
+                    <Text style={styles.cardTitle}>Legal</Text>
+
+                    <TouchableOpacity style={styles.contactRow} onPress={handlePrivacyPolicy} activeOpacity={0.7}>
+                        <View style={[styles.contactIconBox, { backgroundColor: '#E8F0FF' }]}>
+                            <Ionicons name="shield-checkmark" size={22} color={COLORS.primary} />
+                        </View>
+                        <View>
+                            <Text style={styles.contactLabel}>Privacy Policy</Text>
+                        </View>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity style={styles.contactRow} onPress={handleTermsOfService} activeOpacity={0.7}>
+                        <View style={[styles.contactIconBox, { backgroundColor: '#FFF3E8' }]}>
+                            <Ionicons name="document-text" size={22} color={COLORS.accent} />
+                        </View>
+                        <View>
+                            <Text style={styles.contactLabel}>Terms of Service</Text>
                         </View>
                     </TouchableOpacity>
                 </View>
