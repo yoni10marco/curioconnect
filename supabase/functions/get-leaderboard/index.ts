@@ -21,12 +21,14 @@ serve(async (req) => {
             Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
         );
 
-        const column = activeTab === 'xp' ? 'total_xp' : 'streak_count';
+        // Use the leaderboard_profiles view which computes effective_streak at read time
+        // so users with stale streaks (haven't opened the app) don't appear at the top
+        const column = activeTab === 'xp' ? 'total_xp' : 'effective_streak';
 
         // Fetch securely from the server side
         const { data, error } = await supabaseAdmin
-            .from('profiles')
-            .select('id, username, total_xp, streak_count')
+            .from('leaderboard_profiles')
+            .select('id, username, total_xp, streak_count, effective_streak')
             .order(column, { ascending: false })
             .limit(100);
 

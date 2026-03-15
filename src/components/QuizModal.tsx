@@ -10,8 +10,11 @@ import {
     Platform,
     ScrollView,
     Alert,
+    Dimensions,
+    Image,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { LinearGradient } from 'expo-linear-gradient';
 
 // Haptics are native-only — safe no-op on web
 const triggerHaptic = async (type: 'success' | 'error') => {
@@ -30,6 +33,208 @@ import { useAuthStore } from '../store/useAuthStore';
 import { useRewardedAd } from '../hooks/useRewardedAd';
 import { AD_UNITS } from '../lib/ads';
 
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+
+// ──────────────────────────────────────────
+// Sparkle Particle Component (correct answer)
+// ──────────────────────────────────────────
+const SPARKLE_COLORS = ['#FFD700', '#4A7FB5', '#E8878C', '#D4A574', '#7BA3CC', '#FFFFFF'];
+
+function SparkleEffect({ active }: { active: boolean }) {
+    const particles = useRef(
+        Array.from({ length: 12 }, () => ({
+            x: new Animated.Value(0),
+            y: new Animated.Value(0),
+            opacity: new Animated.Value(0),
+            scale: new Animated.Value(0),
+            color: SPARKLE_COLORS[Math.floor(Math.random() * SPARKLE_COLORS.length)],
+            angle: Math.random() * Math.PI * 2,
+            distance: 40 + Math.random() * 60,
+        }))
+    ).current;
+
+    useEffect(() => {
+        if (!active) return;
+        particles.forEach((p) => {
+            p.x.setValue(0);
+            p.y.setValue(0);
+            p.opacity.setValue(1);
+            p.scale.setValue(0);
+
+            const targetX = Math.cos(p.angle) * p.distance;
+            const targetY = Math.sin(p.angle) * p.distance;
+
+            Animated.parallel([
+                Animated.timing(p.x, { toValue: targetX, duration: 500, useNativeDriver: true }),
+                Animated.timing(p.y, { toValue: targetY, duration: 500, useNativeDriver: true }),
+                Animated.sequence([
+                    Animated.timing(p.scale, { toValue: 1.2, duration: 200, useNativeDriver: true }),
+                    Animated.timing(p.scale, { toValue: 0, duration: 300, useNativeDriver: true }),
+                ]),
+                Animated.sequence([
+                    Animated.delay(200),
+                    Animated.timing(p.opacity, { toValue: 0, duration: 300, useNativeDriver: true }),
+                ]),
+            ]).start();
+        });
+    }, [active]);
+
+    if (!active) return null;
+
+    return (
+        <View style={StyleSheet.absoluteFill} pointerEvents="none">
+            {particles.map((p, i) => (
+                <Animated.View
+                    key={i}
+                    style={{
+                        position: 'absolute',
+                        left: '50%',
+                        top: '50%',
+                        width: 8,
+                        height: 8,
+                        borderRadius: 4,
+                        backgroundColor: p.color,
+                        transform: [
+                            { translateX: p.x },
+                            { translateY: p.y },
+                            { scale: p.scale },
+                        ],
+                        opacity: p.opacity,
+                    }}
+                />
+            ))}
+        </View>
+    );
+}
+
+// ──────────────────────────────────────────
+// Confetti Component (lesson completion)
+// ──────────────────────────────────────────
+const CONFETTI_COLORS = ['#FFD700', '#4A7FB5', '#E8878C', '#D4A574', '#2E5A8A', '#7BA3CC', '#FF6B6B', '#50C878'];
+
+function ConfettiEffect({ active }: { active: boolean }) {
+    const pieces = useRef(
+        Array.from({ length: 40 }, () => ({
+            x: new Animated.Value(Math.random() * SCREEN_WIDTH),
+            y: new Animated.Value(-20),
+            rotate: new Animated.Value(0),
+            opacity: new Animated.Value(1),
+            color: CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)],
+            width: 6 + Math.random() * 8,
+            height: 10 + Math.random() * 14,
+            startX: Math.random() * SCREEN_WIDTH,
+            drift: (Math.random() - 0.5) * 100,
+            delay: Math.random() * 600,
+            duration: 2000 + Math.random() * 1500,
+        }))
+    ).current;
+
+    useEffect(() => {
+        if (!active) return;
+        pieces.forEach((p) => {
+            p.x.setValue(p.startX);
+            p.y.setValue(-20);
+            p.rotate.setValue(0);
+            p.opacity.setValue(1);
+
+            Animated.sequence([
+                Animated.delay(p.delay),
+                Animated.parallel([
+                    Animated.timing(p.y, { toValue: SCREEN_HEIGHT + 20, duration: p.duration, useNativeDriver: true }),
+                    Animated.timing(p.x, { toValue: p.startX + p.drift, duration: p.duration, useNativeDriver: true }),
+                    Animated.timing(p.rotate, { toValue: 6, duration: p.duration, useNativeDriver: true }),
+                    Animated.sequence([
+                        Animated.delay(p.duration * 0.7),
+                        Animated.timing(p.opacity, { toValue: 0, duration: p.duration * 0.3, useNativeDriver: true }),
+                    ]),
+                ]),
+            ]).start();
+        });
+    }, [active]);
+
+    if (!active) return null;
+
+    return (
+        <View style={[StyleSheet.absoluteFill, { zIndex: 100 }]} pointerEvents="none">
+            {pieces.map((p, i) => (
+                <Animated.View
+                    key={i}
+                    style={{
+                        position: 'absolute',
+                        width: p.width,
+                        height: p.height,
+                        borderRadius: 2,
+                        backgroundColor: p.color,
+                        opacity: p.opacity,
+                        transform: [
+                            { translateX: p.x },
+                            { translateY: p.y },
+                            { rotate: p.rotate.interpolate({ inputRange: [0, 6], outputRange: ['0deg', '2160deg'] }) },
+                        ],
+                    }}
+                />
+            ))}
+        </View>
+    );
+}
+
+// ──────────────────────────────────────────
+// Shimmer Button Component
+// ──────────────────────────────────────────
+function ShimmerButton({ label, onPress, style }: { label: string; onPress: () => void; style?: any }) {
+    const shimmerAnim = useRef(new Animated.Value(0)).current;
+    const pulseAnim = useRef(new Animated.Value(1)).current;
+
+    useEffect(() => {
+        const shimmer = Animated.loop(
+            Animated.timing(shimmerAnim, { toValue: 1, duration: 2000, useNativeDriver: true })
+        );
+        const pulse = Animated.loop(
+            Animated.sequence([
+                Animated.timing(pulseAnim, { toValue: 1.04, duration: 1000, useNativeDriver: true }),
+                Animated.timing(pulseAnim, { toValue: 1, duration: 1000, useNativeDriver: true }),
+            ])
+        );
+        shimmer.start();
+        pulse.start();
+        return () => { shimmer.stop(); pulse.stop(); };
+    }, []);
+
+    const shimmerTranslate = shimmerAnim.interpolate({
+        inputRange: [0, 1],
+        outputRange: [-200, 300],
+    });
+
+    return (
+        <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
+            <TouchableOpacity onPress={onPress} activeOpacity={0.85} style={[styles.doneButton, style]}>
+                <LinearGradient
+                    colors={['#4A7FB5', '#2E5A8A', '#4A7FB5']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={StyleSheet.absoluteFill}
+                />
+                {/* Shimmer overlay */}
+                <Animated.View
+                    style={[
+                        StyleSheet.absoluteFill,
+                        {
+                            backgroundColor: 'rgba(255,255,255,0.25)',
+                            width: 60,
+                            transform: [{ translateX: shimmerTranslate }, { skewX: '-20deg' }],
+                        },
+                    ]}
+                />
+                <Text style={styles.doneButtonText}>{label}</Text>
+            </TouchableOpacity>
+        </Animated.View>
+    );
+}
+
+// ──────────────────────────────────────────
+// Main QuizModal
+// ──────────────────────────────────────────
+
 interface Props {
     visible: boolean;
     questions: QuizQuestion[];
@@ -47,12 +252,19 @@ export default function QuizModal({ visible, questions, isFinalPage, onClose, on
     const [score, setScore] = useState(0);
     const [finished, setFinished] = useState(false);
     const [doubleXpClaimed, setDoubleXpClaimed] = useState(false);
+    const [showSparkles, setShowSparkles] = useState(false);
+    const [showConfetti, setShowConfetti] = useState(false);
 
     // Store shuffled options and correct answer string for current question
     const [shuffledOptions, setShuffledOptions] = useState<string[]>([]);
     const [correctAnswerStr, setCorrectAnswerStr] = useState<string>('');
 
     const shakeAnim = useRef(new Animated.Value(0)).current;
+    const correctBounceAnim = useRef(new Animated.Value(1)).current;
+    const correctGlowAnim = useRef(new Animated.Value(0)).current;
+    const mascotAnim = useRef(new Animated.Value(0)).current;
+    const resultsScaleAnim = useRef(new Animated.Value(0)).current;
+
     const { lesson, completeLesson } = useLessonStore();
     const { addXp } = useAuthStore();
     // Capture completion state when modal opens so results screen stays stable after completeLesson() runs
@@ -60,6 +272,9 @@ export default function QuizModal({ visible, questions, isFinalPage, onClose, on
 
     // Accumulate quiz XP across ALL pages so the double XP ad covers the full lesson
     const cumulativeQuizXpRef = useRef(0);
+
+    // Mutex to prevent double-tap on "Finish Lesson" / "Next Question"
+    const handlingNextRef = useRef(false);
 
     // Once-per-day guard for double XP ad
     const [doubleXpWatchedToday, setDoubleXpWatchedToday] = useState(false);
@@ -85,6 +300,31 @@ export default function QuizModal({ visible, questions, isFinalPage, onClose, on
         Alert.alert('Double XP! 🚀', `+${xpToDouble} bonus XP earned!`);
     });
 
+    // Animate results screen entrance + confetti
+    useEffect(() => {
+        if (finished) {
+            resultsScaleAnim.setValue(0.5);
+            Animated.spring(resultsScaleAnim, {
+                toValue: 1,
+                friction: 5,
+                tension: 80,
+                useNativeDriver: true,
+            }).start();
+
+            // Victory mascot bounce
+            Animated.loop(
+                Animated.sequence([
+                    Animated.timing(mascotAnim, { toValue: -12, duration: 400, useNativeDriver: true }),
+                    Animated.timing(mascotAnim, { toValue: 0, duration: 400, useNativeDriver: true }),
+                ])
+            ).start();
+
+            if (isFinalPage && !wasAlreadyCompleted.current) {
+                setShowConfetti(true);
+            }
+        }
+    }, [finished]);
+
     const shake = () => {
         triggerHaptic('error');
         Animated.sequence([
@@ -94,6 +334,30 @@ export default function QuizModal({ visible, questions, isFinalPage, onClose, on
             Animated.timing(shakeAnim, { toValue: -8, duration: 50, useNativeDriver: true }),
             Animated.timing(shakeAnim, { toValue: 0, duration: 50, useNativeDriver: true }),
         ]).start();
+    };
+
+    const triggerCorrectBurst = () => {
+        triggerHaptic('success');
+
+        // Bounce the correct option
+        correctBounceAnim.setValue(0.9);
+        Animated.spring(correctBounceAnim, {
+            toValue: 1,
+            friction: 3,
+            tension: 200,
+            useNativeDriver: true,
+        }).start();
+
+        // Glow pulse
+        correctGlowAnim.setValue(0);
+        Animated.sequence([
+            Animated.timing(correctGlowAnim, { toValue: 1, duration: 300, useNativeDriver: false }),
+            Animated.timing(correctGlowAnim, { toValue: 0, duration: 400, useNativeDriver: false }),
+        ]).start();
+
+        // Sparkles
+        setShowSparkles(false);
+        setTimeout(() => setShowSparkles(true), 10);
     };
 
     const question = questions[current];
@@ -115,9 +379,9 @@ export default function QuizModal({ visible, questions, isFinalPage, onClose, on
 
         const correct = shuffledOptions[idx] === correctAnswerStr;
         if (correct) {
-            triggerHaptic('success');
             setAnswerState('correct');
             setScore((s) => s + 1);
+            triggerCorrectBurst();
         } else {
             setAnswerState('wrong');
             shake();
@@ -125,22 +389,29 @@ export default function QuizModal({ visible, questions, isFinalPage, onClose, on
     };
 
     const handleNext = async () => {
-        const nextIdx = current + 1;
-        if (nextIdx >= questions.length) {
-            setFinished(true);
-            // Add quiz XP first (awaited), so completeLesson reads the updated profile
-            if (!wasAlreadyCompleted.current && score > 0) {
-                const quizXp = score * 20;
-                cumulativeQuizXpRef.current += quizXp;
-                await addXp(quizXp);
+        if (handlingNextRef.current) return;
+        handlingNextRef.current = true;
+        try {
+            const nextIdx = current + 1;
+            if (nextIdx >= questions.length) {
+                setFinished(true);
+                // Add quiz XP first (awaited), so completeLesson reads the updated profile
+                if (!wasAlreadyCompleted.current && score > 0) {
+                    const quizXp = score * 20;
+                    cumulativeQuizXpRef.current += quizXp;
+                    await addXp(quizXp);
+                }
+                if (isFinalPage) {
+                    await completeLesson();
+                }
+            } else {
+                setCurrent(nextIdx);
+                setSelected(null);
+                setAnswerState('unanswered');
+                setShowSparkles(false);
             }
-            if (isFinalPage) {
-                await completeLesson();
-            }
-        } else {
-            setCurrent(nextIdx);
-            setSelected(null);
-            setAnswerState('unanswered');
+        } finally {
+            handlingNextRef.current = false;
         }
     };
 
@@ -151,6 +422,10 @@ export default function QuizModal({ visible, questions, isFinalPage, onClose, on
         setScore(0);
         setFinished(false);
         setDoubleXpClaimed(false);
+        setShowSparkles(false);
+        setShowConfetti(false);
+        handlingNextRef.current = false;
+        mascotAnim.setValue(0);
         onComplete();
     };
 
@@ -168,9 +443,17 @@ export default function QuizModal({ visible, questions, isFinalPage, onClose, on
         return styles.optionText;
     };
 
+    const correctGlowColor = correctGlowAnim.interpolate({
+        inputRange: [0, 1],
+        outputRange: ['rgba(80, 200, 120, 0)', 'rgba(80, 200, 120, 0.15)'],
+    });
+
     return (
         <Modal visible={visible} animationType="slide" presentationStyle="formSheet" onRequestClose={onClose}>
             <SafeAreaView style={styles.safeArea}>
+                {/* Confetti overlay for lesson completion */}
+                <ConfettiEffect active={showConfetti} />
+
                 {/* Header */}
                 <View style={styles.header}>
                     <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
@@ -197,38 +480,96 @@ export default function QuizModal({ visible, questions, isFinalPage, onClose, on
                 </View>
 
                 {finished ? (
-                    // Results Screen
+                    // ──────────────────────────────────────────
+                    // RESULTS / GRAND FINALE SCREEN
+                    // ──────────────────────────────────────────
                     <ScrollView contentContainerStyle={styles.results} showsVerticalScrollIndicator={false}>
-                        <Text style={styles.resultsEmoji}>
-                            {isFinalPage ? (score === questions.length ? '🏆' : '🌟') : '📖'}
-                        </Text>
-                        <Text style={styles.resultsTitle}>
-                            {isFinalPage ? 'Lesson Complete!' : 'Knowledge Checked!'}
-                        </Text>
-                        <Text style={styles.resultsScore}>{score} / {questions.length} correct</Text>
-                        {!wasAlreadyCompleted.current && cumulativeQuizXpRef.current > 0 && <Text style={styles.resultsXp}>+{cumulativeQuizXpRef.current} XP Earned! 🎉</Text>}
-                        {isFinalPage && !wasAlreadyCompleted.current && <Text style={styles.resultsXp}>+30 XP Final Bonus! 🎓</Text>}
-                        {isFinalPage && !wasAlreadyCompleted.current && <Text style={styles.resultsStreak}>Your streak is growing! 🔥</Text>}
-                        {/* Ad: Double XP — only on first completion of final page, once per day */}
-                        {isFinalPage && !wasAlreadyCompleted.current && !doubleXpClaimed && !doubleXpWatchedToday && (
-                            <TouchableOpacity
-                                style={[styles.doubleXpButton, !doubleXpAd.isLoaded && styles.doubleXpButtonDisabled]}
-                                onPress={() => doubleXpAd.show()}
-                                disabled={!doubleXpAd.isLoaded}
-                                activeOpacity={0.85}
-                            >
-                                <Text style={styles.doubleXpButtonText}>
-                                    {doubleXpAd.isLoaded ? `📺 Watch ad → Double XP (+${cumulativeQuizXpRef.current + 30} bonus)` : '⏳ Loading ad...'}
-                                </Text>
-                            </TouchableOpacity>
-                        )}
-                        <TouchableOpacity style={styles.doneButton} onPress={handleRestartAndClose}>
-                            <Text style={styles.doneButtonText}>{isFinalPage ? 'Back to Dashboard' : 'Read Next Page'}</Text>
-                        </TouchableOpacity>
+                        <Animated.View style={[styles.resultsInner, { transform: [{ scale: resultsScaleAnim }] }]}>
+                            {/* Mascot with victory bounce */}
+                            <Animated.View style={{ transform: [{ translateY: mascotAnim }] }}>
+                                <Image
+                                    source={require('../../assets/icon.png')}
+                                    style={styles.mascotImage}
+                                />
+                            </Animated.View>
+
+                            {isFinalPage ? (
+                                <LinearGradient
+                                    colors={['#FFD700', '#E8878C', '#4A7FB5']}
+                                    start={{ x: 0, y: 0 }}
+                                    end={{ x: 1, y: 1 }}
+                                    style={styles.completionBadge}
+                                >
+                                    <Text style={styles.completionBadgeText}>LESSON COMPLETE</Text>
+                                </LinearGradient>
+                            ) : (
+                                <View style={styles.pageCompleteBadge}>
+                                    <Text style={styles.pageCompleteBadgeText}>PAGE CLEARED</Text>
+                                </View>
+                            )}
+
+                            <Text style={styles.resultsTitle}>
+                                {isFinalPage
+                                    ? (score === questions.length ? 'Perfect Score!' : 'Well Done!')
+                                    : 'Knowledge Checked!'}
+                            </Text>
+
+                            <Text style={styles.scoreCircleText}>
+                                <Text style={styles.scoreCircleNumber}>{score}</Text>
+                                <Text style={styles.scoreCircleDenom}>/{questions.length}</Text>
+                            </Text>
+
+                            {!wasAlreadyCompleted.current && cumulativeQuizXpRef.current > 0 && (
+                                <View style={styles.xpBadge}>
+                                    <Text style={styles.xpBadgeText}>+{cumulativeQuizXpRef.current} XP</Text>
+                                </View>
+                            )}
+                            {isFinalPage && !wasAlreadyCompleted.current && (
+                                <View style={[styles.xpBadge, styles.xpBadgeGold]}>
+                                    <Text style={[styles.xpBadgeText, styles.xpBadgeTextGold]}>+30 XP Completion Bonus 🎓</Text>
+                                </View>
+                            )}
+                            {isFinalPage && !wasAlreadyCompleted.current && (
+                                <Text style={styles.resultsStreak}>Your streak is growing! 🔥</Text>
+                            )}
+
+                            {/* Ad: Double XP — only on first completion of final page, once per day */}
+                            {isFinalPage && !wasAlreadyCompleted.current && !doubleXpClaimed && !doubleXpWatchedToday && (
+                                <TouchableOpacity
+                                    style={[styles.doubleXpButton, !doubleXpAd.isLoaded && styles.doubleXpButtonDisabled]}
+                                    onPress={() => doubleXpAd.show()}
+                                    disabled={!doubleXpAd.isLoaded}
+                                    activeOpacity={0.85}
+                                >
+                                    <LinearGradient
+                                        colors={['#FFD700', '#FFA500']}
+                                        start={{ x: 0, y: 0 }}
+                                        end={{ x: 1, y: 0 }}
+                                        style={StyleSheet.absoluteFill}
+                                    />
+                                    <Text style={styles.doubleXpButtonText}>
+                                        {doubleXpAd.isLoaded ? `📺 Watch ad → Double XP (+${cumulativeQuizXpRef.current + 30} bonus)` : '⏳ Loading ad...'}
+                                    </Text>
+                                </TouchableOpacity>
+                            )}
+
+                            <ShimmerButton
+                                label={isFinalPage ? 'Back to Dashboard' : 'Read Next Page'}
+                                onPress={handleRestartAndClose}
+                            />
+                        </Animated.View>
                     </ScrollView>
                 ) : (
-                    // Question Screen
+                    // ──────────────────────────────────────────
+                    // QUESTION SCREEN
+                    // ──────────────────────────────────────────
                     <Animated.View key={current} style={[styles.content, { transform: [{ translateX: shakeAnim }] }]}>
+                        {/* Animated glow overlay on correct */}
+                        <Animated.View
+                            style={[StyleSheet.absoluteFill, { backgroundColor: correctGlowColor, zIndex: -1 }]}
+                            pointerEvents="none"
+                        />
+
                         {!question ? (
                             <ScrollView contentContainerStyle={styles.results} showsVerticalScrollIndicator={false}>
                                 <Text style={styles.resultsEmoji}>😕</Text>
@@ -249,30 +590,56 @@ export default function QuizModal({ visible, questions, isFinalPage, onClose, on
                                 </View>
 
                                 <View style={styles.options}>
-                                    {shuffledOptions.map((opt, idx) => (
-                                        <TouchableOpacity
-                                            key={idx}
-                                            style={getOptionStyle(idx)}
-                                            onPress={() => handleSelect(idx)}
-                                            activeOpacity={0.8}
-                                            disabled={answerState !== 'unanswered'}
-                                        >
-                                            <View style={styles.optionLabel}>
-                                                <Text style={styles.optionLetter}>
-                                                    {['A', 'B', 'C', 'D'][idx]}
-                                                </Text>
-                                            </View>
-                                            <Text style={getOptionTextStyle(idx)}>{opt}</Text>
-                                        </TouchableOpacity>
-                                    ))}
+                                    {shuffledOptions.map((opt, idx) => {
+                                        const isCorrectOption = shuffledOptions[idx] === correctAnswerStr;
+                                        const shouldBounce = answerState === 'correct' && isCorrectOption;
+
+                                        return (
+                                            <Animated.View
+                                                key={idx}
+                                                style={shouldBounce ? { transform: [{ scale: correctBounceAnim }] } : undefined}
+                                            >
+                                                <TouchableOpacity
+                                                    style={getOptionStyle(idx)}
+                                                    onPress={() => handleSelect(idx)}
+                                                    activeOpacity={0.8}
+                                                    disabled={answerState !== 'unanswered'}
+                                                >
+                                                    <View style={[
+                                                        styles.optionLabel,
+                                                        answerState === 'correct' && isCorrectOption && styles.optionLabelCorrect,
+                                                    ]}>
+                                                        <Text style={[
+                                                            styles.optionLetter,
+                                                            answerState === 'correct' && isCorrectOption && styles.optionLetterCorrect,
+                                                        ]}>
+                                                            {answerState === 'correct' && isCorrectOption ? '✓' : ['A', 'B', 'C', 'D'][idx]}
+                                                        </Text>
+                                                    </View>
+                                                    <Text style={getOptionTextStyle(idx)}>{opt}</Text>
+                                                </TouchableOpacity>
+                                                {/* Sparkle burst on the correct option */}
+                                                {shouldBounce && <SparkleEffect active={showSparkles} />}
+                                            </Animated.View>
+                                        );
+                                    })}
                                 </View>
 
                                 {answerState !== 'unanswered' && (
                                     <View style={[styles.feedback, answerState === 'correct' ? styles.feedbackCorrect : styles.feedbackWrong]}>
-                                        <Text style={styles.feedbackText}>
+                                        {answerState === 'correct' ? (
+                                            <LinearGradient
+                                                colors={['#50C87810', '#10B98120']}
+                                                style={[StyleSheet.absoluteFill, { borderRadius: RADIUS.xl }]}
+                                            />
+                                        ) : null}
+                                        <Text style={[styles.feedbackText, answerState === 'correct' && styles.feedbackTextCorrect]}>
                                             {answerState === 'correct' ? '✅ Correct! Well done!' : `❌ The correct answer was: ${correctAnswerStr}`}
                                         </Text>
-                                        <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
+                                        <TouchableOpacity
+                                            style={[styles.nextButton, answerState === 'correct' && styles.nextButtonCorrect]}
+                                            onPress={handleNext}
+                                        >
                                             <Text style={styles.nextButtonText}>
                                                 {current + 1 >= questions.length ? (isFinalPage ? 'Finish Lesson' : 'See Results') : 'Next Question →'}
                                             </Text>
@@ -323,7 +690,7 @@ const styles = StyleSheet.create({
     scoreChipText: {
         fontSize: FONTS.sizes.sm,
         fontWeight: FONTS.weights.bold,
-        color: '#B8860B',
+        color: '#8B6F47',
     },
     progressDots: {
         flexDirection: 'row',
@@ -372,8 +739,8 @@ const styles = StyleSheet.create({
         gap: SPACING.md,
     },
     optionCorrect: {
-        borderColor: COLORS.primary,
-        backgroundColor: `${COLORS.primary}12`,
+        borderColor: '#50C878',
+        backgroundColor: '#50C87812',
     },
     optionWrong: {
         borderColor: COLORS.danger,
@@ -387,6 +754,13 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
     },
+    optionLabelCorrect: {
+        backgroundColor: '#50C878',
+    },
+    optionLetterCorrect: {
+        color: COLORS.white,
+        fontWeight: FONTS.weights.heavy,
+    },
     optionLetter: {
         fontSize: FONTS.sizes.sm,
         fontWeight: FONTS.weights.bold,
@@ -398,14 +772,15 @@ const styles = StyleSheet.create({
         flex: 1,
         lineHeight: 22,
     },
-    optionTextCorrect: { color: COLORS.primaryDark, fontWeight: FONTS.weights.semibold },
+    optionTextCorrect: { color: '#2E7D32', fontWeight: FONTS.weights.semibold },
     optionTextWrong: { color: COLORS.danger, fontWeight: FONTS.weights.semibold },
     feedback: {
         borderRadius: RADIUS.xl,
         padding: SPACING.md,
         marginTop: SPACING.md,
+        overflow: 'hidden',
     },
-    feedbackCorrect: { backgroundColor: `${COLORS.primary}15` },
+    feedbackCorrect: { backgroundColor: '#50C87815' },
     feedbackWrong: { backgroundColor: `${COLORS.danger}10` },
     feedbackText: {
         fontSize: FONTS.sizes.md,
@@ -413,53 +788,124 @@ const styles = StyleSheet.create({
         fontWeight: FONTS.weights.medium,
         marginBottom: SPACING.md,
     },
+    feedbackTextCorrect: {
+        color: '#2E7D32',
+        fontWeight: FONTS.weights.bold,
+    },
     nextButton: {
         backgroundColor: COLORS.primary,
         borderRadius: RADIUS.md,
         padding: SPACING.md,
         alignItems: 'center',
     },
+    nextButtonCorrect: {
+        backgroundColor: '#50C878',
+    },
     nextButtonText: {
         color: COLORS.white,
         fontSize: FONTS.sizes.lg,
         fontWeight: FONTS.weights.bold,
     },
+    // ── Results / Grand Finale ──
     results: {
         flexGrow: 1,
         alignItems: 'center',
         justifyContent: 'center',
         padding: SPACING.xl,
     },
+    resultsInner: {
+        alignItems: 'center',
+        width: '100%',
+    },
+    mascotImage: {
+        width: 120,
+        height: 120,
+        borderRadius: 28,
+        marginBottom: SPACING.md,
+    },
+    completionBadge: {
+        borderRadius: RADIUS.full,
+        paddingHorizontal: SPACING.lg,
+        paddingVertical: SPACING.sm,
+        marginBottom: SPACING.md,
+    },
+    completionBadgeText: {
+        color: COLORS.white,
+        fontSize: FONTS.sizes.xs,
+        fontWeight: FONTS.weights.heavy,
+        letterSpacing: 2,
+    },
+    pageCompleteBadge: {
+        borderRadius: RADIUS.full,
+        paddingHorizontal: SPACING.lg,
+        paddingVertical: SPACING.sm,
+        marginBottom: SPACING.md,
+        backgroundColor: `${COLORS.primary}20`,
+    },
+    pageCompleteBadgeText: {
+        color: COLORS.primaryDark,
+        fontSize: FONTS.sizes.xs,
+        fontWeight: FONTS.weights.heavy,
+        letterSpacing: 2,
+    },
     resultsEmoji: { fontSize: 80, marginBottom: SPACING.lg },
     resultsTitle: {
         fontSize: FONTS.sizes.xxl,
         fontWeight: FONTS.weights.heavy,
         color: COLORS.textDark,
-        marginBottom: SPACING.sm,
+        marginBottom: SPACING.md,
+        textAlign: 'center',
+    },
+    scoreCircleText: {
+        marginBottom: SPACING.md,
+        textAlign: 'center',
+    },
+    scoreCircleNumber: {
+        fontSize: 48,
+        fontWeight: FONTS.weights.heavy,
+        color: COLORS.primary,
+    },
+    scoreCircleDenom: {
+        fontSize: FONTS.sizes.xl,
+        fontWeight: FONTS.weights.bold,
+        color: COLORS.textLight,
     },
     resultsScore: {
         fontSize: FONTS.sizes.xl,
         color: COLORS.textMedium,
         marginBottom: SPACING.sm,
     },
-    resultsXp: {
+    xpBadge: {
+        backgroundColor: `${COLORS.primary}18`,
+        borderRadius: RADIUS.full,
+        paddingHorizontal: SPACING.lg,
+        paddingVertical: SPACING.sm,
+        marginBottom: SPACING.sm,
+    },
+    xpBadgeGold: {
+        backgroundColor: '#FFD70025',
+    },
+    xpBadgeText: {
         fontSize: FONTS.sizes.lg,
         fontWeight: FONTS.weights.bold,
         color: COLORS.primary,
-        marginBottom: SPACING.xs,
+    },
+    xpBadgeTextGold: {
+        color: '#B8860B',
     },
     resultsStreak: {
         fontSize: FONTS.sizes.md,
         color: COLORS.streak,
         marginBottom: SPACING.xl,
+        fontWeight: FONTS.weights.bold,
     },
     doubleXpButton: {
-        backgroundColor: COLORS.accent,
         borderRadius: RADIUS.xl,
         paddingHorizontal: SPACING.xl,
         paddingVertical: SPACING.md,
         marginBottom: SPACING.md,
-        shadowColor: COLORS.accent,
+        overflow: 'hidden',
+        shadowColor: '#FFD700',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.4,
         shadowRadius: 10,
@@ -477,10 +923,13 @@ const styles = StyleSheet.create({
         textAlign: 'center',
     },
     doneButton: {
-        backgroundColor: COLORS.primary,
         borderRadius: RADIUS.xl,
         paddingHorizontal: SPACING.xl,
         paddingVertical: SPACING.md,
+        overflow: 'hidden',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minWidth: 200,
         shadowColor: COLORS.primary,
         shadowOffset: { width: 0, height: 6 },
         shadowOpacity: 0.4,

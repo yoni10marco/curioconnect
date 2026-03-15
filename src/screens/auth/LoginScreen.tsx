@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { AntDesign } from '@expo/vector-icons';
+import { Image } from 'react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/theme';
 import { useAuthStore } from '../../store/useAuthStore';
 
@@ -76,7 +77,7 @@ export default function LoginScreen() {
 
     return (
         <LinearGradient
-            colors={['#58CC02', '#3D9A00']}
+            colors={['#4A7FB5', '#2E5A8A']}
             style={styles.gradient}
         >
             <KeyboardAvoidingView
@@ -86,7 +87,10 @@ export default function LoginScreen() {
                 <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
                     {/* Logo / Hero */}
                     <View style={styles.hero}>
-                        <Text style={styles.emoji}>🦉</Text>
+                        <Image
+                            source={require('../../../assets/icon.png')}
+                            style={styles.logoImage}
+                        />
                         <Text style={styles.appName}>CurioConnect</Text>
                         <Text style={styles.tagline}>Learn anything through what you love</Text>
                     </View>
@@ -198,8 +202,10 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginBottom: SPACING.xl,
     },
-    emoji: {
-        fontSize: 72,
+    logoImage: {
+        width: 100,
+        height: 100,
+        borderRadius: 24,
         marginBottom: SPACING.sm,
     },
     appName: {

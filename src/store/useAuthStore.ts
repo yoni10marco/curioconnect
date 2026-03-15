@@ -177,53 +177,79 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     updateProfile: async (updates) => {
         const { session, profile } = get();
-        if (!session) return;
-        const { data } = await supabase
+        if (!session || !profile) return;
+        // Optimistic update for instant UI feedback
+        const prev = profile;
+        set({ profile: { ...profile, ...updates } as Profile });
+        const { data, error } = await supabase
             .from('profiles')
             .update(updates)
             .eq('id', session.user.id)
             .select()
             .single();
-        // Always update in-memory state — use server data if available, else merge locally
-        set({ profile: (data ?? (profile ? { ...profile, ...updates } : null)) as Profile | null });
+        if (error) {
+            // Rollback to previous state on failure
+            set({ profile: prev });
+        } else if (data) {
+            // Confirm with authoritative server data
+            set({ profile: data as Profile });
+        }
     },
 
     addStreakFreeze: async () => {
-        const { profile, updateProfile } = get();
-        if (!profile) return;
+        const { session, profile } = get();
+        if (!session || !profile) return;
         const current = profile.streak_freeze_count ?? 0;
         if (current >= MAX_FREEZE) return;
-        await updateProfile({ streak_freeze_count: current + 1 });
+        // Optimistic update
+        set({ profile: { ...profile, streak_freeze_count: current + 1 } });
+        const { data, error } = await supabase.rpc('increment_streak_freeze', {
+            uid: session.user.id,
+            max_freeze: MAX_FREEZE,
+        });
+        if (error || data === null) {
+            // Rollback — DB rejected (already at max or failure)
+            set({ profile: { ...profile, streak_freeze_count: current } });
+        } else {
+            // Confirm with server value
+            set({ profile: { ...get().profile!, streak_freeze_count: data } });
+        }
     },
 
     addXp: async (amount: number) => {
-        const { profile, updateProfile } = get();
-        if (profile) {
-            await updateProfile({ total_xp: (profile.total_xp ?? 0) + amount });
+        const { session, profile } = get();
+        if (!session || !profile) return;
+        // Optimistic update
+        set({ profile: { ...profile, total_xp: (profile.total_xp ?? 0) + amount } });
+        const { error } = await supabase.rpc('increment_xp', {
+            uid: session.user.id,
+            amount,
+        });
+        if (error) {
+            // Rollback on failure
+            set({ profile: { ...profile } });
         }
     },
 
     checkAndResetStreak: async () => {
-        const { profile, updateProfile } = get();
-        if (!profile || !profile.last_lesson_date) return;
+        const { session, profile } = get();
+        if (!session || !profile || !profile.last_lesson_date) return;
 
-        const today = new Date();
-        const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        const _d = new Date();
+        const todayStr = `${_d.getFullYear()}-${String(_d.getMonth() + 1).padStart(2, '0')}-${String(_d.getDate()).padStart(2, '0')}`;
 
-        const yesterday = new Date(today);
-        yesterday.setDate(yesterday.getDate() - 1);
-        const yesterdayStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
+        // Server-side RPC handles multi-day gap logic:
+        // - Counts missed days between last_lesson_date and today
+        // - Consumes one freeze per missed day
+        // - Resets streak to 0 if not enough freezes to cover the gap
+        const { error } = await supabase.rpc('check_and_reset_streak', {
+            uid: session.user.id,
+            today_date: todayStr,
+        });
 
-        if (profile.last_lesson_date !== todayStr && profile.last_lesson_date !== yesterdayStr) {
-            if ((profile.streak_freeze_count ?? 0) >= 1) {
-                // Consume 1 freeze; update last_lesson_date to today so streak remains valid
-                await updateProfile({
-                    streak_freeze_count: profile.streak_freeze_count - 1,
-                    last_lesson_date: todayStr,
-                });
-            } else {
-                await updateProfile({ streak_count: 0 });
-            }
+        if (!error) {
+            // Re-fetch profile to reflect any changes (freeze consumed or streak reset)
+            await get().fetchProfile(session.user.id);
         }
     },
 }));

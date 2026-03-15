@@ -45,18 +45,20 @@ Two Zustand stores:
 
 **[src/store/useAuthStore.ts](src/store/useAuthStore.ts)** — session, profile, XP, streaks
 - `signIn/signUp/signOut`, `updateProfile`, `addXp`, `checkAndResetStreak`
-- Streak resets if `last_lesson_date` is neither today nor yesterday
-- **Streak freeze**: if `streak_freeze_count >= 1`, consumes one freeze instead of resetting streak to 0
+- `addXp` uses `increment_xp` Postgres RPC for atomic server-side increment (no read-modify-write race)
+- `addStreakFreeze` uses `increment_streak_freeze` RPC with max-cap guard
+- `updateProfile` uses optimistic local update with rollback on DB failure
+- **Streak freeze**: `checkAndResetStreak` delegates to `check_and_reset_streak` Postgres RPC which counts the actual multi-day gap and consumes one freeze per missed day. If not enough freezes to cover the gap, streak resets to 0 and all remaining freezes are consumed
 - `checkAndResetStreak` is called on app launch (initial session + auth state changes) in `RootNavigator`, so streaks are always evaluated on open — not only when the Dashboard is focused
 
 **[src/store/useLessonStore.ts](src/store/useLessonStore.ts)** — daily lesson lifecycle
 - `fetchOrGenerateLesson` → checks DB for today's lesson → tries consuming from `lesson_queue` → falls back to on-demand `generate-lesson` Edge Function
 - `quiz_data` is stored as JSONB in DB; format is an array of page objects: `[{text, questions}, ...]`
 - XP: 30 XP on first completion, 0 XP on replay; +20 XP per correct quiz answer (UI only)
-- `completeLesson()` marks lesson done, cancels scheduled notifications, updates streak
+- `completeLesson()` uses `complete_lesson_atomic` RPC — idempotent: only awards XP/streak on first completion, no-ops on replay or double-tap
 
 **[src/lib/lessonQueue.ts](src/lib/lessonQueue.ts)** — lesson queue management
-- `consumeFromQueue` → takes next lesson from `lesson_queue`, inserts into `daily_lessons`, deletes from queue
+- `consumeFromQueue` → uses `consume_queue_lesson` RPC to atomically claim next queue item + insert into `daily_lessons` in a single transaction
 - `triggerRefillIfNeeded` → fire-and-forget call to `generate-lesson-batch` if queue < 5
 - `buildLessonPairs` → round-robin topic+interest pairing for batch generation
 
@@ -83,22 +85,35 @@ Implemented in [src/lib/notifications.ts](src/lib/notifications.ts):
 - `generate-lesson` — on-demand single lesson generation via Gemini 3.1 Flash Lite Preview; produces multi-page format (4-6 pages, 2 quiz questions each)
 - `generate-lesson-batch` — pre-generates up to 25 lessons in chunks of 5 per Gemini call; same multi-page format as `generate-lesson`; called fire-and-forget from onboarding and queue refill
 - `sync-lesson-queue` — reactive sync when interests/difficulty change; deletes stale lessons, regenerates to fill queue back to 25
-- `get-leaderboard` — fetches top 100 users sorted by XP or streak using service role key; takes `activeTab` param (`'xp'` | `'streak_count'`)
+- `get-leaderboard` — fetches top 100 users from `leaderboard_profiles` view sorted by XP or `effective_streak`; the view computes streak validity at read time via `get_effective_streak()` so stale streaks (user hasn't opened app) show as 0
 - `discover-interests` — analyzes a free-text user prompt via Gemini 3.1 Flash Lite Preview (single call: moderation + discovery); adds up to 3 new interests per call; max 25 interests total per user; deduplicates against existing interests
 
 **Edge Function deployment**: All functions must be deployed with `--no-verify-jwt` (or `verify_jwt: false` via MCP) because they handle auth internally via `adminSupabase.auth.getUser(token)`. The Supabase gateway's JWT check would block valid requests otherwise. All client-side calls must include manual `Authorization: Bearer ${session.access_token}` headers.
 
 **Key Tables:**
-- `profiles` — `id, username, total_xp, streak_count, last_lesson_date, difficulty_level, age, job_title, streak_freeze_count (default 1), admin_role ('full_admin' | 'read_only_admin' | null), last_difficulty_change, created_at`
+- `profiles` — `id, username, total_xp, streak_count, last_lesson_date, difficulty_level, age, job_title, streak_freeze_count (default 1), admin_role ('full_admin' | 'read_only_admin' | null), last_difficulty_change, last_interest_change, created_at`
 - `user_interests` — many-to-one with profiles (`id, user_id, interest_name`)
 - `topics` — 50+ academic topics for lesson generation (`id, name, category`)
-- `daily_lessons` — quiz_data (JSONB, pages format), interest_name, one per user per day
+- `daily_lessons` — quiz_data (JSONB, pages format), interest_name, one per user per day per slot; unique index on `(user_id, created_at, lesson_slot)`
 - `lesson_queue` — pre-generated lessons waiting to be served (`id, user_id, topic_name, interest_name, title, content_markdown, quiz_data (JSONB pages format), queue_position, generated_at`); RLS: users can SELECT and DELETE own rows; Edge Functions insert via service role
 - `news_messages` — broadcast news sent from admin dashboard
 - `user_news_reads` — per-user read tracking for news messages
 - `feedbacks` — user-submitted feedback (`id, user_id, content, created_at`); insert-only RLS for users; admin reads via service role key
 
 All tables use RLS; users can only access their own rows.
+
+**Postgres RPCs** (called via `supabase.rpc()`, all `SECURITY DEFINER`):
+- `increment_xp(uid, amount)` — atomic XP addition; no read-modify-write race
+- `increment_streak_freeze(uid, max_freeze)` — atomic freeze add; returns new count; rejects if already at cap
+- `consume_streak_freeze(uid, today_date)` — atomic freeze decrement + last_lesson_date update
+- `check_and_reset_streak(uid, today_date)` — server-side multi-day gap logic: counts missed days, consumes one freeze per day, resets streak if insufficient freezes
+- `complete_lesson_atomic(lesson_id, xp_amount, new_streak, today_date)` — idempotent lesson completion; only updates if `is_completed = false`; prevents double-tap double XP
+- `consume_queue_lesson(p_user_id, p_today, p_slot)` — atomic queue claim via `DELETE ... FOR UPDATE SKIP LOCKED`; returns inserted daily_lesson as JSONB
+- `save_user_interests(p_user_id, p_interests)` — transactional delete + re-insert of user interests
+- `get_effective_streak(streak_count, freeze_count, last_lesson_date)` — pure function computing streak validity at read time (used by `leaderboard_profiles` view)
+
+**Views:**
+- `leaderboard_profiles` — extends `profiles` with computed `effective_streak` column for accurate leaderboard ranking
 
 ### Admin Dashboard (`/admin`)
 Separate Next.js 14 app with Tailwind CSS and Supabase SSR.
@@ -117,9 +132,19 @@ Separate Next.js 14 app with Tailwind CSS and Supabase SSR.
 
 ### Design System
 Tokens defined in [src/lib/theme.ts](src/lib/theme.ts):
-- Primary: `#58CC02` (green), XP gold: `#FFC800`, Streak orange: `#FF9600`, Danger: `#FF4B4B`
+- Primary: `#4A7FB5` (blue), Primary dark: `#2E5A8A`, Accent/XP: `#D4A574` (tan), Streak: `#E8878C` (rose), Danger: `#E85A5A`
+- Background: `#F5F0EB` (warm beige), Text dark: `#2E3A46`, Border: `#DDD5CC`
 - Font sizes: xs (11) → title (34); weights: regular → heavy (800)
 - Spacing: xs (4px) → xxl (48px); border radius: sm (8) → full (9999)
+
+### Layout Direction
+App is forced to LTR globally via `I18nManager.allowRTL(false)` / `I18nManager.forceRTL(false)` in [App.tsx](App.tsx). Do not add per-element RTL workarounds.
+
+### Quiz Animations
+[src/components/QuizModal.tsx](src/components/QuizModal.tsx) includes three animation sub-components (no external deps):
+- `SparkleEffect` — 12 particles burst on correct answer
+- `ConfettiEffect` — 40 falling pieces on lesson completion
+- `ShimmerButton` — pulsing button with shimmer sweep
 
 ### Date Formatting Convention
 **Never use `new Date().toISOString().split('T')[0]` for local date strings** — `toISOString()` outputs UTC, which produces the wrong date for users in UTC+ timezones (e.g. UTC+2 users get yesterday's date before 2 AM).

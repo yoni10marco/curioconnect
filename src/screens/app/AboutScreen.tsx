@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Linking } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Linking, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../lib/theme';
 import { APP_VERSION } from '../../lib/version';
@@ -29,9 +29,10 @@ export default function AboutScreen() {
             <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
                 {/* Logo & App Info */}
                 <View style={styles.brandSection}>
-                    <View style={styles.logoBox}>
-                        <Text style={styles.logoEmoji}>🌟</Text>
-                    </View>
+                    <Image
+                        source={require('../../../assets/icon.png')}
+                        style={styles.logoImage}
+                    />
                     <Text style={styles.appName}>CurioConnect</Text>
                     <Text style={styles.appVersion}>Version {APP_VERSION}</Text>
                 </View>
@@ -64,7 +65,7 @@ export default function AboutScreen() {
                     </TouchableOpacity>
 
                     <TouchableOpacity style={styles.contactRow} onPress={handleInstagram} activeOpacity={0.7}>
-                        <View style={[styles.contactIconBox, { backgroundColor: '#FCE4EC' }]}>
+                        <View style={[styles.contactIconBox, { backgroundColor: '#F5E0E2' }]}>
                             <Text style={styles.contactIcon}>📸</Text>
                         </View>
                         <View>
@@ -121,22 +122,16 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginVertical: SPACING.xl,
     },
-    logoBox: {
-        width: 80,
-        height: 80,
-        borderRadius: 40,
-        backgroundColor: '#FFF8E1',
-        justifyContent: 'center',
-        alignItems: 'center',
+    logoImage: {
+        width: 100,
+        height: 100,
+        borderRadius: 24,
         marginBottom: SPACING.md,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.1,
         shadowRadius: 8,
         elevation: 4,
-    },
-    logoEmoji: {
-        fontSize: 40,
     },
     appName: {
         fontSize: FONTS.sizes.xxl,
@@ -180,7 +175,7 @@ const styles = StyleSheet.create({
         width: 48,
         height: 48,
         borderRadius: 24,
-        backgroundColor: '#E3F2FD',
+        backgroundColor: '#E8DDD3',
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: SPACING.md,

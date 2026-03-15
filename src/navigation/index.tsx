@@ -164,7 +164,8 @@ export default function RootNavigator() {
 
     useEffect(() => {
         if (!session || hasInterests !== true) return;
-        const today = new Date().toISOString().split('T')[0];
+        const _d = new Date();
+        const today = `${_d.getFullYear()}-${String(_d.getMonth() + 1).padStart(2, '0')}-${String(_d.getDate()).padStart(2, '0')}`;
         const isCompleted = profile?.last_lesson_date === today;
         initializeNotifications(isCompleted);
     }, [session, hasInterests]);

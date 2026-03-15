@@ -180,15 +180,11 @@ export const useLessonStore = create<LessonState>((set) => ({
 
     completeLesson: async () => {
         const { lesson } = useLessonStore.getState();
-        const { session, profile, updateProfile } = useAuthStore.getState();
+        const { session, profile } = useAuthStore.getState();
 
         if (!lesson || !session || !profile) return;
 
-        // Mark lesson as completed
-        await supabase
-            .from('daily_lessons')
-            .update({ is_completed: true })
-            .eq('id', lesson.id);
+        const isReplaying = lesson.is_completed;
 
         // Cancel today's notifications — lesson is done
         await cancelTodayNotifications();
@@ -208,20 +204,24 @@ export const useLessonStore = create<LessonState>((set) => ({
             newStreak = profile.streak_count ?? 1; // Already counted today
         }
 
-        const isReplaying = lesson.is_completed;
         const xpToAdd = isReplaying ? 0 : 30;
 
-        // Update XP + streak
-        await updateProfile({
-            total_xp: (profile.total_xp ?? 0) + xpToAdd,
-            streak_count: newStreak,
-            last_lesson_date: todayStr,
+        // Atomically: mark lesson complete + update XP/streak (prevents double-tap double XP)
+        const { data: wasCompleted } = await supabase.rpc('complete_lesson_atomic', {
+            lesson_id: lesson.id,
+            xp_amount: xpToAdd,
+            new_streak: newStreak,
+            today_date: todayStr,
         });
 
+        // Update local state
         set({ lesson: normalizeLesson({ ...lesson, is_completed: true }) });
 
+        // Re-fetch profile to get authoritative XP/streak from DB
+        await useAuthStore.getState().fetchProfile(session.user.id);
+
         // Referral reward: trigger once on the referred user's first lesson completion
-        if (!isReplaying && profile.referred_by_user_id && !profile.referral_reward_given) {
+        if (wasCompleted && !isReplaying && profile.referred_by_user_id && !profile.referral_reward_given) {
             const { data } = await supabase.functions.invoke('apply-referral-reward', {
                 headers: { Authorization: `Bearer ${session.access_token}` },
                 body: { user_id: session.user.id },

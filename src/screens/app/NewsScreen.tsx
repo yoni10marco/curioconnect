@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
     },
     unreadCard: {
         borderLeftColor: COLORS.primary,
-        backgroundColor: '#FAFFFA',
+        backgroundColor: '#F5F8FB',
     },
     cardHeaderRow: {
         flexDirection: 'row',

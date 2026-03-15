@@ -64,6 +64,7 @@ export default function DashboardScreen() {
         }
     });
 
+    const startingLessonRef = useRef(false);
     const scrollRef = useRef<ScrollView>(null);
 
     useFocusEffect(
@@ -112,12 +113,18 @@ export default function DashboardScreen() {
     });
 
     const handleStartLesson = async () => {
-        resetLesson();
-        await fetchOrGenerateLesson();
-        if (useLessonStore.getState().lesson) {
-            navigation.navigate('LessonReader');
-        } else {
-            Alert.alert('Error', useLessonStore.getState().error ?? 'Could not load lesson.');
+        if (startingLessonRef.current) return;
+        startingLessonRef.current = true;
+        try {
+            resetLesson();
+            await fetchOrGenerateLesson();
+            if (useLessonStore.getState().lesson) {
+                navigation.navigate('LessonReader');
+            } else {
+                Alert.alert('Error', useLessonStore.getState().error ?? 'Could not load lesson.');
+            }
+        } finally {
+            startingLessonRef.current = false;
         }
     };
 
@@ -137,7 +144,7 @@ export default function DashboardScreen() {
                 showsVerticalScrollIndicator={false}
             >
                 {/* Header */}
-                <LinearGradient colors={['#58CC02', '#3D9A00']} style={styles.header}>
+                <LinearGradient colors={['#4A7FB5', '#2E5A8A']} style={styles.header}>
                     {/* Version badge - top left */}
                     <View style={styles.versionRow}>
                         <View style={styles.versionBadge}>

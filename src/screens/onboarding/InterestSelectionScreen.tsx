@@ -111,7 +111,7 @@ export default function InterestSelectionScreen() {
                             lessons: pairs,
                             difficulty_level: difficulty,
                         },
-                    });
+                    }).catch(() => {});
                 }
             } catch {
                 // Silent — queue generation is best-effort
@@ -137,7 +137,7 @@ export default function InterestSelectionScreen() {
                     <TouchableOpacity style={styles.backButton} onPress={signOut} activeOpacity={0.7}>
                         <Text style={styles.backButtonText}>← Back</Text>
                     </TouchableOpacity>
-                    <Text style={styles.emoji}>🌟</Text>
+                    <Text style={styles.emoji}>🛡️</Text>
                     <Text style={styles.title}>Set up your profile</Text>
                     <Text style={styles.subtitle}>
                         Tell us about yourself so we can personalize your learning experience.

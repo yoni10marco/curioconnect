@@ -149,7 +149,7 @@ const styles = StyleSheet.create({
         width: 48,
         height: 48,
         borderRadius: 24,
-        backgroundColor: '#FFF8E1',
+        backgroundColor: '#E8DDD3',
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: SPACING.md,
@@ -171,13 +171,13 @@ const styles = StyleSheet.create({
         color: COLORS.textMedium,
     },
     xpBadge: {
-        backgroundColor: '#E8F5E9', // Light green
+        backgroundColor: '#E0EAF2', // Light blue
         paddingHorizontal: SPACING.sm,
         paddingVertical: 4,
         borderRadius: RADIUS.full,
     },
     xpText: {
-        color: '#2E7D32', // Dark green
+        color: '#2E5A8A', // Dark blue
         fontSize: FONTS.sizes.xs,
         fontWeight: FONTS.weights.bold,
     },

@@ -89,7 +89,7 @@ export default function LeaderboardScreen() {
                         ) : (
                             leaders.map((user, index) => {
                                 const isMe = session?.user?.id === user.id;
-                                const val = activeTab === 'xp' ? user.total_xp : user.streak_count;
+                                const val = activeTab === 'xp' ? user.total_xp : ((user as any).effective_streak ?? user.streak_count);
 
                                 return (
                                     <View key={user.id} style={[styles.userRow, isMe && styles.myRow]}>
@@ -97,11 +97,11 @@ export default function LeaderboardScreen() {
                                             <Text style={styles.rankText}>{renderMedal(index)}</Text>
                                         </View>
                                         <View style={styles.userInfo}>
-                                            <Text style={[styles.username, isMe && styles.myUsername]}>
+                                            <Text style={[styles.username, isMe && styles.myUsername]} numberOfLines={1}>
                                                 {user.username || 'Anonymous'} {isMe && '(You)'}
                                             </Text>
                                         </View>
-                                        <Text style={styles.statScore}>
+                                        <Text style={styles.statScore} numberOfLines={1}>
                                             {val} {activeTab === 'xp' ? 'XP' : 'Days'}
                                         </Text>
                                     </View>
@@ -186,7 +186,7 @@ const styles = StyleSheet.create({
         borderRadius: RADIUS.lg,
     },
     myRow: {
-        backgroundColor: '#E8EAF6', // light indigo
+        backgroundColor: '#E0EAF2', // light blue
         borderWidth: 1,
         borderColor: COLORS.primary,
     },
@@ -217,6 +217,8 @@ const styles = StyleSheet.create({
         fontSize: FONTS.sizes.lg,
         fontWeight: FONTS.weights.heavy,
         color: COLORS.primary,
+        textAlign: 'right',
+        minWidth: 70,
     },
     emptyText: {
         textAlign: 'center',

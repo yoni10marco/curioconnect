@@ -85,7 +85,8 @@ export default function ProfileScreen() {
             const limit = profileData.discover_weekly_limit ?? 1;
             const weekStart = profileData.discover_week_start ?? null;
             const count = profileData.discover_week_count ?? 0;
-            const today = new Date().toISOString().split('T')[0];
+            const _d2 = new Date();
+            const today = `${_d2.getFullYear()}-${String(_d2.getMonth() + 1).padStart(2, '0')}-${String(_d2.getDate()).padStart(2, '0')}`;
             const isNewWeek = !weekStart ||
                 (new Date(today).getTime() - new Date(weekStart).getTime()) >= 7 * 24 * 60 * 60 * 1000;
             setDiscoverLimit(limit);
@@ -141,7 +142,7 @@ export default function ProfileScreen() {
                             difficulty_level: profile?.difficulty_level ?? 'adult',
                             difficulty_changed: false,
                         },
-                    });
+                    }).catch(() => {});
                 }
             } else {
                 Alert.alert('No New Interests', 'These interests are already in your profile!');
@@ -198,25 +199,17 @@ export default function ProfileScreen() {
         }
 
         setSaving(true);
-        // Delete existing interests
-        const { error: deleteError } = await supabase
-            .from('user_interests')
-            .delete()
-            .eq('user_id', session.user.id);
+        // Atomically delete + re-insert interests in a single transaction
+        const { error: interestError } = await supabase.rpc('save_user_interests', {
+            p_user_id: session.user.id,
+            p_interests: Array.from(selected),
+        });
 
-        if (deleteError) {
+        if (interestError) {
             Alert.alert('Error', 'Failed to update interests.');
             setSaving(false);
             return;
         }
-
-        // Insert new selected
-        const rows = Array.from(selected).map((name) => ({
-            user_id: session.user.id,
-            interest_name: name,
-        }));
-
-        const { error: insertError } = await supabase.from('user_interests').insert(rows);
 
         // Update profile specifics (include last_difficulty_change if changed)
         const parsedAge = parseInt(ageInput, 10);
@@ -248,19 +241,15 @@ export default function ProfileScreen() {
                     difficulty_level: difficulty,
                     difficulty_changed: difficultyChanged,
                 },
-            });
+            }).catch(() => {});
         }
 
         // Update refs for next save
         initialInterestsRef.current = new Set(selected);
         initialDifficultyRef.current = difficulty;
 
-        if (insertError) {
-            Alert.alert('Error', 'Failed to save new interests.');
-        } else {
-            Alert.alert('Success', 'Profile updated!');
-            navigation.goBack();
-        }
+        Alert.alert('Success', 'Profile updated!');
+        navigation.goBack();
         setSaving(false);
     };
 
@@ -482,8 +471,8 @@ const styles = StyleSheet.create({
     cardTitle: { fontSize: FONTS.sizes.lg, fontWeight: FONTS.weights.bold, color: COLORS.textDark, marginBottom: SPACING.xs },
     cardDesc: { fontSize: FONTS.sizes.sm, color: COLORS.textMedium, marginBottom: SPACING.md, lineHeight: 20 },
     cardSubtitle: { fontSize: FONTS.sizes.sm, fontWeight: FONTS.weights.bold, color: COLORS.textMedium, marginTop: SPACING.md, marginBottom: SPACING.sm },
-    comingSoonBadge: { backgroundColor: '#FFF3E0', paddingHorizontal: 8, paddingVertical: 4, borderRadius: RADIUS.full },
-    comingSoonText: { color: '#F57C00', fontSize: FONTS.sizes.xs, fontWeight: FONTS.weights.bold, textTransform: 'uppercase' },
+    comingSoonBadge: { backgroundColor: '#E0EAF2', paddingHorizontal: 8, paddingVertical: 4, borderRadius: RADIUS.full },
+    comingSoonText: { color: '#2E5A8A', fontSize: FONTS.sizes.xs, fontWeight: FONTS.weights.bold, textTransform: 'uppercase' },
     disabledInput: {
         backgroundColor: COLORS.background,
         borderWidth: 1,

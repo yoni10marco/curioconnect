@@ -62,14 +62,14 @@ const styles = StyleSheet.create({
         marginBottom: SPACING.sm,
     },
     comingSoonBadge: {
-        backgroundColor: '#E8EAF6', // Light Indigo
+        backgroundColor: '#E0EAF2', // Light Blue
         paddingHorizontal: SPACING.md,
         paddingVertical: 6,
         borderRadius: RADIUS.full,
         marginBottom: SPACING.lg,
     },
     comingSoonText: {
-        color: '#3F51B5', // Indigo
+        color: '#2E5A8A', // Blue
         fontSize: FONTS.sizes.sm,
         fontWeight: FONTS.weights.bold,
         textTransform: 'uppercase',
