@@ -114,7 +114,7 @@ android {
         applicationId 'com.curioconnect.app'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 2
+        versionCode 1
         versionName "0.1.41"
     }
     signingConfigs {
