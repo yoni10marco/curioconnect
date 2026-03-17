@@ -54,7 +54,7 @@ export async function scheduleMorningNotificationForToday(): Promise<string | nu
       body: 'Your daily lesson is waiting. Open CurioConnect and start today\'s session!',
       sound: true,
     },
-    trigger: { date: trigger },
+    trigger: { type: 'date', date: trigger },
   });
 
   await AsyncStorage.setItem(STORAGE_KEY_MORNING_ID, id);
@@ -74,7 +74,7 @@ export async function scheduleEveningNotificationForToday(): Promise<string | nu
       body: "You haven't studied today yet. Take a few minutes before bed!",
       sound: true,
     },
-    trigger: { date: trigger },
+    trigger: { type: 'date', date: trigger },
   });
 
   await AsyncStorage.setItem(STORAGE_KEY_EVENING_ID, id);

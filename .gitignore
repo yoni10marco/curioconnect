@@ -15,8 +15,13 @@ expo-env.d.ts
 *.p12
 *.key
 *.mobileprovision
-*.orig.*
-web-build/
+
+# Android build artifacts
+*.apk
+*.aab
+android/app/build/
+android/build/
+android/local.properties
 
 # macOS
 .DS_Store
@@ -38,9 +43,6 @@ web-build/
 
 # Dev notes (local only)
 DEV_NOTES.md
-
-# APK builds
-*.apk
 
 # Skills
 skills-lock.json

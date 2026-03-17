@@ -13,7 +13,7 @@ export default function AboutScreen() {
     };
 
     const handleInstagram = () => {
-        Linking.openURL('https://instagram.com/curioconnect');
+        Linking.openURL('https://instagram.com/mynameiscurio');
     };
 
     const handlePrivacyPolicy = () => {
@@ -79,7 +79,7 @@ export default function AboutScreen() {
                         </View>
                         <View>
                             <Text style={styles.contactLabel}>Instagram</Text>
-                            <Text style={styles.contactValue}>@curioconnect</Text>
+                            <Text style={styles.contactValue}>@mynameiscurio</Text>
                         </View>
                     </TouchableOpacity>
                 </View>

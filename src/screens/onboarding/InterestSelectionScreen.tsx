@@ -300,7 +300,7 @@ const styles = StyleSheet.create({
     backButtonText: {
         color: 'rgba(255,255,255,0.9)',
         fontSize: FONTS.sizes.md,
-        fontWeight: FONTS.weights.semiBold,
+        fontWeight: FONTS.weights.semibold,
     },
     emoji: { fontSize: 48, marginBottom: SPACING.sm },
     title: {

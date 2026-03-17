@@ -19,17 +19,44 @@ cd admin && npm run dev
 
 No lint or test commands are configured in package.json.
 
+### Android Build
+
+```bash
+# Prebuild (regenerates android/ directory — destroys customizations!)
+npx expo prebuild --platform android --clean
+
+# Release APK
+cd android && ./gradlew app:assembleRelease
+
+# Release AAB (for Google Play)
+cd android && ./gradlew app:bundleRelease
+```
+
+**After every `expo prebuild --clean`**, you MUST re-apply these customizations to `android/`:
+1. Restore `android/app/upload-keystore.jks` (not in git — keep a backup outside the repo)
+2. Create `android/local.properties` with `sdk.dir=<path-to-Android-SDK>`
+3. In `android/app/build.gradle`: set `debuggableVariants = []`, add release signing config, set `signingConfig signingConfigs.release` in release buildType
+4. In `android/build.gradle`: set targetSdkVersion default to `'35'`
+5. In `android/app/src/main/AndroidManifest.xml`: add `<meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="ca-app-pub-2213890156530970~8173572553"/>` inside `<application>`
+
+**Current release config:**
+- Version: 1.0.1 / versionCode 2 (set in `app.json` AND `android/app/build.gradle`)
+- API level 35 (targetSdk & compileSdk) — required by Google Play
+- Signed with `upload-keystore.jks` (password: `CurioConnect`, alias: `upload`)
+- Package: `com.curioconnect.app`
+
 ## Architecture Overview
 
 CurioConnect is a React Native + Expo app ("Duolingo for everything") — a gamified AI-powered learning platform. Backend is entirely Supabase (Auth, PostgreSQL, Edge Functions).
 
 ### Tech Stack
-- **React Native + Expo v51** — cross-platform (iOS, Android, Web)
+- **React Native 0.76.9 + Expo v52** — cross-platform (iOS, Android, Web)
 - **Supabase** — auth, database (PostgreSQL with RLS), Edge Functions (Deno)
 - **Zustand** — global state management
 - **React Navigation native-stack** — navigation
 - **Google Gemini 3.1 Flash Lite Preview** (`gemini-3.1-flash-lite-preview`) — lesson generation and interest discovery via Edge Functions
 - **Expo Notifications** — daily push notifications (morning + evening)
+- **Google Mobile Ads** (`react-native-google-mobile-ads@^14.2.4`) — rewarded ads for streak freeze, double XP, bonus lesson
 - **Next.js 14** — admin dashboard (separate app in `/admin`)
 
 ### Navigation Flow
@@ -62,6 +89,14 @@ Two Zustand stores:
 - `triggerRefillIfNeeded` → fire-and-forget call to `generate-lesson-batch` if queue < 5
 - `buildLessonPairs` → round-robin topic+interest pairing for batch generation
 
+### Ads (Google AdMob)
+Configured in [src/lib/ads.ts](src/lib/ads.ts) and [src/hooks/useRewardedAd.ts](src/hooks/useRewardedAd.ts):
+- AdMob app ID: `ca-app-pub-2213890156530970~8173572553` (must be in AndroidManifest.xml — app crashes on launch without it)
+- Three rewarded ad placements: streak freeze, double XP, bonus lesson
+- `MobileAds().initialize()` called at module load (wrapped in try-catch)
+- Ad hooks use dynamic import and are no-op on web
+- `expo-crypto` is a required dependency (used by Supabase auth internally) — must be `~14.0.x` for Expo 52 compatibility (v55+ requires Expo 53)
+
 ### Push Notifications
 Implemented in [src/lib/notifications.ts](src/lib/notifications.ts):
 - **Morning** (8:00 AM): "Ready to learn? 📚" daily reminder
@@ -70,6 +105,7 @@ Implemented in [src/lib/notifications.ts](src/lib/notifications.ts):
 - Canceled when lesson is completed or user signs out
 - Disabled on web platform
 - Notification IDs persisted in AsyncStorage
+- **Expo 52 trigger format**: `{ type: 'date', date: <Date> }` (not just `{ date: <Date> }`)
 
 ### Supabase Setup
 
@@ -160,3 +196,15 @@ const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}
 Strict mode enabled. Shared types/interfaces in [src/lib/types.ts](src/lib/types.ts).
 
 Key types: `Profile`, `UserInterest`, `Topic`, `QuizQuestion`, `PageData`, `DailyLesson`, `NewsMessage`, `Feedback`.
+
+### Expo 52 Caveats
+- Font weight key is `FONTS.weights.semibold` (lowercase b), not `semiBold`
+- Notification triggers require `type` field: `{ type: 'date', date }` or `{ type: 'calendar', ... }`
+- `react-native-google-mobile-ads` must be v14.x (v16+ requires Kotlin 2.2, Expo 52 ships Kotlin 1.9.25)
+- `expo-crypto` must be v14.x (`~14.0.0`) — v55+ requires Expo 53's gradle plugin
+
+### Google Play Release
+- Privacy policy hosted on GitHub Pages
+- App targets ages 13+ (COPPA/data safety implications)
+- Hebrew (`he-IL`) store listing in addition to English (`en-US`)
+- Version tracking: `src/lib/version.ts`, `app.json`, and `android/app/build.gradle` must all be updated together
