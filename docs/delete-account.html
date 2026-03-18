@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delete Account - CurioConnect</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.7; color: #0F172A; background: #F0F4F8; padding: 20px; }
+        .container { max-width: 720px; margin: 0 auto; background: #fff; border-radius: 16px; padding: 40px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+        h1 { font-size: 28px; font-weight: 800; color: #0F172A; margin-bottom: 8px; }
+        .app-name { color: #00D4FF; }
+        .subtitle { color: #64748B; margin-bottom: 32px; font-size: 15px; }
+        h2 { font-size: 18px; font-weight: 700; color: #0F172A; margin: 28px 0 12px; }
+        p { color: #334155; margin-bottom: 12px; }
+        .steps { list-style: none; padding: 0; counter-reset: steps; }
+        .steps li { counter-increment: steps; display: flex; gap: 16px; align-items: flex-start; padding: 16px; background: #F8FAFC; border-radius: 12px; margin-bottom: 12px; }
+        .steps li::before { content: counter(steps); background: #00D4FF; color: #fff; font-weight: 800; font-size: 14px; min-width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-top: 2px; }
+        .email-box { background: #F0F4F8; border: 2px solid #E2E8F0; border-radius: 12px; padding: 20px; margin: 16px 0; }
+        .email-box a { color: #00D4FF; font-weight: 700; text-decoration: none; }
+        .email-box a:hover { text-decoration: underline; }
+        .tag { display: inline-block; background: #FFF3CD; color: #856404; border-radius: 6px; padding: 2px 10px; font-size: 13px; font-weight: 600; }
+        .deleted { background: #FEE2E2; }
+        .deleted .tag { background: #FEE2E2; color: #991B1B; }
+        .retained { background: #DCFCE7; }
+        .retained .tag { background: #DCFCE7; color: #166534; }
+        table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+        th { background: #F1F5F9; text-align: left; padding: 10px 14px; font-size: 14px; color: #475569; }
+        td { padding: 10px 14px; border-bottom: 1px solid #E2E8F0; font-size: 14px; color: #334155; }
+        .badge-deleted { background: #FEE2E2; color: #991B1B; border-radius: 6px; padding: 2px 8px; font-size: 12px; font-weight: 600; }
+        .badge-retained { background: #DCFCE7; color: #166534; border-radius: 6px; padding: 2px 8px; font-size: 12px; font-weight: 600; }
+        .notice { background: #FFF7ED; border-left: 4px solid #FF6B35; border-radius: 8px; padding: 16px; margin-top: 24px; font-size: 14px; color: #7C3A00; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1><span class="app-name">CurioConnect</span> — Account Deletion</h1>
+        <p class="subtitle">You can request the deletion of your CurioConnect account and all associated data at any time.</p>
+
+        <h2>How to Request Account Deletion</h2>
+        <ol class="steps">
+            <li>
+                <div>
+                    <strong>Send an email to our support address</strong><br>
+                    Use the email address associated with your CurioConnect account.
+                </div>
+            </li>
+            <li>
+                <div>
+                    <strong>Use the subject line: <code>Delete My Account</code></strong><br>
+                    This helps us process your request promptly.
+                </div>
+            </li>
+            <li>
+                <div>
+                    <strong>Include your registered email address in the message body</strong><br>
+                    So we can locate and verify your account.
+                </div>
+            </li>
+            <li>
+                <div>
+                    <strong>We will confirm deletion within 7 business days</strong><br>
+                    You will receive a confirmation email once the deletion is complete.
+                </div>
+            </li>
+        </ol>
+
+        <div class="email-box">
+            📧 Send your request to: <a href="mailto:curioconnecforyou@gmail.com?subject=Delete%20My%20Account">curioconnecforyou@gmail.com</a>
+        </div>
+
+        <h2>What Data Will Be Deleted</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Data Type</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td>Account credentials (email, password)</td><td><span class="badge-deleted">Deleted immediately</span></td></tr>
+                <tr><td>Profile information (username, age, job title)</td><td><span class="badge-deleted">Deleted immediately</span></td></tr>
+                <tr><td>Learning interests</td><td><span class="badge-deleted">Deleted immediately</span></td></tr>
+                <tr><td>Daily lessons and quiz history</td><td><span class="badge-deleted">Deleted immediately</span></td></tr>
+                <tr><td>XP points and streak data</td><td><span class="badge-deleted">Deleted immediately</span></td></tr>
+                <tr><td>Lesson queue (pre-generated lessons)</td><td><span class="badge-deleted">Deleted immediately</span></td></tr>
+                <tr><td>Push notification tokens</td><td><span class="badge-deleted">Deleted immediately</span></td></tr>
+                <tr><td>Feedback submitted to CurioConnect</td><td><span class="badge-retained">Retained for up to 90 days (anonymized)</span></td></tr>
+            </tbody>
+        </table>
+
+        <div class="notice">
+            <strong>Note:</strong> Anonymized, aggregated analytics data (not linked to your identity) may be retained for up to 90 days for service improvement purposes. No personally identifiable information is kept after account deletion.
+        </div>
+
+        <h2>Questions?</h2>
+        <p>If you have any questions about your data or the deletion process, contact us at <a href="mailto:curioconnecforyou@gmail.com" style="color:#00D4FF;font-weight:700;">curioconnecforyou@gmail.com</a>.</p>
+
+        <p style="margin-top:32px;font-size:13px;color:#94A3B8;">Last updated: March 2026 · CurioConnect</p>
+    </div>
+</body>
+</html>
