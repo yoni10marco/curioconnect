@@ -2,7 +2,7 @@
     "expo": {
         "name": "CurioConnect",
         "slug": "curioconnect",
-        "version": "1.0.1",
+        "version": "1.0.2",
         "orientation": "portrait",
         "icon": "./assets/icon.png",
         "userInterfaceStyle": "light",
@@ -20,13 +20,21 @@
                 "backgroundColor": "#F0F4F8"
             },
             "package": "com.curioconnect.app",
-            "versionCode": 2,
+            "versionCode": 3,
             "permissions": [
                 "RECEIVE_BOOT_COMPLETED"
             ]
         },
         "plugins": [
             "./plugins/force-ltr",
+            [
+                "expo-font",
+                {
+                    "fonts": [
+                        "./assets/fonts/ionicons.ttf"
+                    ]
+                }
+            ],
             [
                 "expo-notifications",
                 {
